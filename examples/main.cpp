@@ -46,11 +46,10 @@ for more information, see the paper:
     x-, y-, and z-dimensions are equal (such setting should satisfy most needs).
 */
 
+#include <iostream>
+
 // ---- local includes ----
 #include "ZernikeDescriptor.h"
-
-// ---- std includes ----
-#include <cstring>
 
 // reads a voxel grid from a binary file
 template<class TIn, class TOut>
@@ -94,29 +93,27 @@ int main (int argc, char** argv)
     //int d;
     //double* voxels = ReadGrid<float, double> (argv[1], d);
 
-
     // .inv file name
-    char  buf[200];
-    char* ch_ptr = strrchr (argv[1], '.');
-    char* invFName;
-    if (ch_ptr)
+    std::string path{ argv[1] }, invFName;
+
+    auto pos = path.find_last_of(".");
+
+    if (pos != std::string::npos && pos != 0)
     {
-        strncpy (buf, argv[1], ch_ptr - argv[1]);
-        buf[ch_ptr - argv[1]] = '\0';
+        invFName = path.substr(0, pos);
     }
     else
     {
-        fprintf (stderr, "No extension in input filename? : %s\n", argv[1]);
+        std::cerr << "No extension in input filename? : " << argv[1] << std::endl;
     }
-
-    invFName = buf;
 
     // compute the zernike descriptors
     ZernikeDescriptor<double, float> zd (argv[1], atoi (argv[2]));
 
-    strcat (invFName, ".inv");
-    std::cout << "Saving invariants file: " << invFName << " \n";
+    invFName += ".inv";
+    
+    std::cout << "Saving invariants file: " << invFName << std::endl;
 
     // save them into an .inv file
-    zd.SaveInvariants (invFName);
+    zd.SaveInvariants (invFName.c_str());
 }
