@@ -308,9 +308,9 @@ void ZernikeDescriptor<T,TIn>::ComputeInvariants ()
 template<class T, class TIn>
 void ZernikeDescriptor<T,TIn>::SaveInvariants (const char* _fName)
 {
-    std::ofstream outfile (_fName, std::ios_base::binary | std::ios_base::out);
+    std::ofstream outfile (_fName, std::ios_base::out);
 
-    float temp;
+    T temp;
 
     //assert (invariants_.size () == (order_ + 1));
 
@@ -326,11 +326,14 @@ void ZernikeDescriptor<T,TIn>::SaveInvariants (const char* _fName)
     //}
 
     int dim = invariants_.size ();
-    outfile.write ((char*)(&dim), sizeof(int));
-
+    outfile << dim << '\n';
+    //outfile.write ((char*)(&dim), sizeof(int));
+    //outfile.write('\n');
     for (int i=0; i<dim; ++i)
     {
         temp = invariants_[i];
-        outfile.write ((char*)(&temp), sizeof(float));
+        outfile << temp << ' ';
+       /* outfile.write ((char*)(&temp), sizeof(float));
+        outfile.put('\n');*/
     }
 }

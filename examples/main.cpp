@@ -1,4 +1,4 @@
-/*
+﻿/*
 
                           3D Zernike Moments
     Copyright (C) 2003 by Computer Graphics Group, University of Bonn
@@ -50,6 +50,7 @@ for more information, see the paper:
 
 // ---- local includes ----
 #include "ZernikeDescriptor.h"
+#include "BinvoxReader.h"
 
 // reads a voxel grid from a binary file
 template<class TIn, class TOut>
@@ -96,6 +97,30 @@ int main (int argc, char** argv)
     // .inv file name
     std::string path{ argv[1] }, invFName;
 
+    vector<unsigned char> voxels;
+
+    size_t dim{};
+
+    if (!io::binvox::read_binvox(path, voxels, dim))
+    {
+        std::cerr << "Cannot read binvox" << std::endl;
+        return 1;
+    }
+
+    // Воксель содержащий значения из центра
+    vector<double> double_voxels(voxels.size());
+
+    for (size_t x{ 0 }; x < dim; x++)
+    {
+        for (size_t z{ 0 }; z < dim; z++)
+        {
+            for (size_t y{ 0 }; y < dim; y++)
+            {
+                double_voxels.at((x * dim + z) * dim + y) = voxels.at((x * dim + z) * dim + y);
+            }
+        }
+    }
+
     auto pos = path.find_last_of(".");
 
     if (pos != std::string::npos && pos != 0)
@@ -108,12 +133,14 @@ int main (int argc, char** argv)
     }
 
     // compute the zernike descriptors
-    ZernikeDescriptor<double, float> zd (argv[1], atoi (argv[2]));
+    ZernikeDescriptor<double, double> zd (double_voxels.data(), dim, std::stoi(argv[2]));
 
     invFName += ".inv";
+
+    std::string invFile = "tets2.inv";
     
-    std::cout << "Saving invariants file: " << invFName << std::endl;
+    std::cout << "Saving invariants file: " << invFile << std::endl;
 
     // save them into an .inv file
-    zd.SaveInvariants (invFName.c_str());
+    zd.SaveInvariants (invFile.c_str());
 }
