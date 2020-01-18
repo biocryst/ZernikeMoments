@@ -49,79 +49,147 @@ for more information, see the paper:
 #include "stdafx.h"
 #include "binvox_reader.h"
 
+using namespace boost::program_options;
+using namespace boost::filesystem;
+using namespace std;
+
+constexpr char* order_arg_name{ "max-order" };
+constexpr char* order_arg_short_name{ "n" };
+constexpr char* dir_arg_name{ "dir" };
+constexpr char* dir_arg_short_name{ "d" };
+
+auto parse_cli_args(int argc, char** argv)
+{
+	string dir{ dir_arg_name };
+	dir += ',';
+	dir += dir_arg_short_name;
+
+	string order{ order_arg_name };
+	order += ',';
+	order += order_arg_short_name;
+
+	options_description desc{ "Program options for descriptors. Create .inv file with descriptors for each binvox in input directory.\nSee: Novotni M., Klein R. 3D zernike descriptors for content based shape retrieval New York, New York, USA: ACM Press, 2003. 216 с." };
+	desc.add_options()
+		("help,h", "-d path_to_directory -n max_order")
+		(dir.c_str(), value<string>()->required(), "Path to directory with .binvox files.")
+		(order.c_str(), value<int>()->required(), "Maximum order of Zernike moments. N in original paper.")
+		;
+
+	variables_map vm;
+	store(parse_command_line(argc, argv, desc), vm);
+	notify(vm);
+
+	return make_tuple(vm, desc);
+}
+
+bool validate_args(const variables_map& args, const options_description& desc)
+{
+	if (args.count(dir_arg_name) != 1)
+	{
+		cout << dir_arg_name << " occurred multiple times." << endl;
+		return false;
+	}
+
+	if (args.count(order_arg_name) != 1)
+	{
+		cout << order_arg_name << " occurred multiple times." << endl;
+		return false;
+	}
+
+	path input_dir{ args[dir_arg_name].as<string>() };
+
+	if (status(input_dir).type() != file_type::directory_file)
+	{
+		cerr << input_dir << " is not directory or does not exist." << endl;
+		return false;
+	}
+
+	int max_order{ args[order_arg_name].as<int>() };
+
+	if (max_order <= 0)
+	{
+		cerr << "Maximum order must be positive. Actual value is " << max_order << endl;
+		return false;
+	}
+
+	return true;
+}
+
 int main(int argc, char** argv)
 {
-	if (argc != 3)
+	variables_map args;
+
+	try
 	{
-		std::cout << "Usage: ZernikeMoments " <<
-			"directname " <<
-			"<MaxOrder> " << std::endl;
-		return 0;
-	}
-	boost::filesystem::path DirectName(argv[1]);
-	std::vector<boost::filesystem::path> v;
+		auto res_tuple = parse_cli_args(argc, argv);
+		args = get<0>(res_tuple);
+		auto desc = get<1>(res_tuple);
 
-	for (auto&& x : boost::filesystem::recursive_directory_iterator(DirectName)) {
-		std::cout << x.path() << std::endl;
-		auto pos = x.path().string().find_first_of(".");
-		if ((x.path().string()[pos + 1] == 's') && (x.path().string()[pos + 2] == 'u') && (x.path().extension() == ".binvox")) {
-			std::cout << x.path() << std::endl;
-			v.push_back(x.path());
-		}
-	}
-
-	//int d;
-	//double* voxels = ReadGrid<float, double> (argv[1], d);
-
-	// .inv file name
-	for (size_t i = 0; i < v.size() - 1; ++i) {
-		std::string path{ v[i].string() }, invFName;
-
-		vector<double> voxels;
-
-		size_t dim{};
-
-		if (!io::binvox::read_binvox(path, voxels, dim))
+		if (args.count("help"))
 		{
-			std::cerr << "Cannot read binvox" << std::endl;
-			continue;
+			cout << desc << endl;
+			return 0;
 		}
 
-		// Воксель содержащий значения из центра
-		vector<double> double_voxels(voxels.size());
-
-		for (size_t x{ 0 }; x < dim; x++)
+		if (!validate_args(args, desc))
 		{
-			for (size_t z{ 0 }; z < dim; z++)
+			cout << desc << endl;
+			return 1;
+		}
+	}
+	catch (error & err)
+	{
+		cerr << err.what() << endl;
+		return 1;
+	}
+
+	path input_directory{ args[dir_arg_name].as<string>() };
+	int max_order{ args[order_arg_name].as<int>() };
+
+	forward_list<path> all_voxels_files;
+
+	{
+		auto iterator = recursive_directory_iterator(input_directory);
+
+		for (const auto& entry : iterator)
+		{
+			if (entry.status().type() == file_type::directory_file)
 			{
-				for (size_t y{ 0 }; y < dim; y++)
+				cout << "Scanning " << entry.path() << endl;
+			}
+			else if (entry.status().type() == file_type::regular_file)
+			{
+				path local_file{ entry.path() };
+
+				if (local_file.extension() == ".binvox")
 				{
-					double_voxels.at((x * dim + z) * dim + y) = voxels.at((x * dim + z) * dim + y);
+					cout << "Found " << local_file << endl;
+					all_voxels_files.push_front(std::move(local_file));
 				}
 			}
 		}
+	}
 
-		auto pos = path.find_last_of(".");
+	// .inv file name
+	for (const auto& path_to_voxel : all_voxels_files)
+	{
+		vector<double> voxels;
+		size_t dim{};
 
-		if (pos != std::string::npos && pos != 0)
+		if (!io::binvox::read_binvox(path_to_voxel, voxels, dim))
 		{
-			invFName = path.substr(0, pos);
+			cout << "Cannot read binvox from " << path_to_voxel << endl;
+			continue;
 		}
-		else
-		{
-			std::cerr << "No extension in input filename? : " << v[i].string() << std::endl;
-		}
+
+		path new_path = path_to_voxel;
+
+		new_path.replace_extension(".inv");
 
 		// compute the zernike descriptors
-		ZernikeDescriptor<double, double> zd(double_voxels.data(), dim, std::stoi(argv[2]));
+		ZernikeDescriptor<double, double> zd(voxels.data(), dim, max_order);
 
-		invFName += ".inv";
-
-		std::string invFile = invFName;
-
-		std::cout << "Saving invariants file: " << invFile << std::endl;
-
-		// save them into an .inv file
-		zd.SaveInvariants(invFile.c_str());
+		cout << "Saving invariants file: " << new_path << endl;
+		zd.SaveInvariants(new_path.string());
 	}
 }
