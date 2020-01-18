@@ -49,36 +49,6 @@ for more information, see the paper:
 #include "stdafx.h"
 #include "binvox_reader.h"
 
-// reads a voxel grid from a binary file
-template<class TIn, class TOut>
-TOut* ReadGrid(const char* _fname, int& _dim)
-
-{
-	std::ifstream infile(_fname, std::ios_base::binary | std::ios_base::in);
-
-	vector<double> tempGrid;
-	TIn temp;
-
-	// read the grid values
-	while (infile.read((char*)(&temp), sizeof(TIn)))
-	{
-		tempGrid.push_back((double)temp);
-	}
-
-	int d = tempGrid.size();
-	double f = std::pow<double>((double)d, 1.0 / 3.0);
-
-	_dim = floor(f + 0.5);
-
-	TOut* result = new TOut[d];
-	for (int i = 0; i < d; ++i)
-	{
-		result[i] = tempGrid[i];
-	}
-
-	return result;
-}
-
 int main(int argc, char** argv)
 {
 	if (argc != 3)
