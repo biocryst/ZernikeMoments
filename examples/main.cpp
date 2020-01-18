@@ -47,7 +47,7 @@ for more information, see the paper:
 */
 
 #include "stdafx.h"
-#include "BinvoxReader.h"
+#include "binvox_reader.h"
 
 // reads a voxel grid from a binary file
 template<class TIn, class TOut>
@@ -107,7 +107,7 @@ int main(int argc, char** argv)
 	for (size_t i = 0; i < v.size() - 1; ++i) {
 		std::string path{ v[i].string() }, invFName;
 
-		vector<unsigned char> voxels;
+		vector<double> voxels;
 
 		size_t dim{};
 

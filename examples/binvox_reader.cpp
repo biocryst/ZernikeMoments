@@ -1,120 +1,182 @@
 #pragma once
 
-#include "BinvoxReader.h"
+#include "binvox_reader.h"
 
-
-bool io::binvox::read_binvox(std::string path_to_file, std::vector<unsigned char>& voxels, std::size_t & dim)
+bool io::binvox::read_binvox(const boost::filesystem::path& path_to_file, Voxels& voxels, std::size_t& dim)
 {
-    using byte = unsigned char;
+	using byte = unsigned char;
 
-    std::ifstream input{ path_to_file, std::ios::in | std::ios::binary };
+	std::ifstream input{ path_to_file.string(), std::ios::in | std::ios::binary };
 
-    if (!input.is_open())
-    {
-        std::cerr << "Cannot open file '" << path_to_file << '\'' << std::endl;
-        return false;
-    }
+	auto print_error = [&input]()
+	{
+		if (input.eof())
+		{
+			std::cerr << "Unexpected end of file." << std::endl;
+		}
+		else if ((input.rdstate() & std::ifstream::badbit) != 0)
+		{
+			std::cerr << "Either no characters were extracted, or the characters extracted could not be interpreted as a valid value of the appropriate type." << std::endl;
+		}
+		else if ((input.rdstate() & std::ifstream::failbit) != 0)
+		{
+			std::cerr << "Error on stream." << std::endl;
+		}
+	};
 
-    //
-    // read header
-    //
-    std::string line;
+	if (!input.is_open())
+	{
+		std::cerr << "Cannot open file " << path_to_file << std::endl;
+		return false;
+	}
 
-    input >> line;  // #binvox
-    
-    if (line.compare("#binvox") != 0) {
-        std::cout << "Error: first line reads [" << line << "] instead of [#binvox]" << std::endl;
-        return false;
-    }
+	// read header
+	std::string line;
 
-    int version;
+	input >> line;  // #binvox
 
-    input >> version;
+	if (!input.good())
+	{
+		print_error();
+		return false;
+	}
 
-    std::cout << "reading binvox version " << version << std::endl;
+	if (line != "#binvox") {
+		std::cerr << "Error: first line reads [" << line << "] instead of [#binvox]" << std::endl;
+		return false;
+	}
 
-    std::size_t depth{0}, height{}, width{};
-    bool done{ false };
+	int version{};
 
-    while (input.good() && !done) {
-        input >> line;
-        if (line.compare("data") == 0)
-            done = true;
-        else if (line.compare("dim") == 0) {
-            input >> depth >> height >> width;
+	input >> version;
 
-            if (depth != height || depth != width)
-            {
-                std::cerr << "Voxel has unequal dimensions " << std::endl;
-                return 1;
-            }
-            else
-            {
-                dim = depth;
-            }
-        }
-        else {
-            std::cout << "  unrecognized keyword [" << line << "], skipping" << std::endl;
-            char c;
-            do {  // skip until end of line
-                c = input.get();
-            } 
-            while (input.good() && (c != '\n'));
-        }
-    }
+	if (!input.good())
+	{
+		print_error();
+		return false;
+	}
 
-    if (!done) {
-        std::cout << "  error reading header" << std::endl;
-        return false;
-    }
-    if (depth == 0) {
-        std::cout << "  missing dimensions in header" << std::endl;
-        return false;
-    }
+	std::cout << "Reading binvox version: " << version << std::endl;
 
-    std::size_t size = width * height * depth;
+	std::size_t depth{ 0 }, height{}, width{};
 
-    voxels.resize(size);
+	bool done{ false };
 
-    //
-    // read voxel data
-    //
-    byte value{};
-    byte count{};
+	while (input.good() && !done) {
+		input >> line;
 
-    std::size_t index{ 0 }, end_index{ 0 }, nr_voxels{ 0 };
+		if (!input.good())
+		{
+			print_error();
+			return false;
+		}
 
-    input.unsetf(std::ios::skipws);  // need to read every byte now (!)
-    input >> value;  // read the linefeed char
+		if (line == "data")
+		{
+			done = true;
+		}
+		else if (line == "dim")
+		{
+			input >> depth >> height >> width;
 
-    while ((end_index < size) && input.good()) {
-        input >> value >> count;
+			if (!input.good())
+			{
+				print_error();
+				return false;
+			}
 
-        if (input.good()) {
-            end_index = index + count;
-            if (end_index > size)
-            {
-                std::cerr << "Too many values in voxel. Size is incorrcet" << std::endl;
-                return false;
-            }
+			if (depth != height || depth != width)
+			{
+				std::cerr << "Voxel has unequal dimensions." << std::endl;
+				return false;
+			}
+			else
+			{
+				dim = depth;
+			}
+		}
+		else
+		{
+			std::cerr << "  unrecognized keyword [" << line << "], skipping" << std::endl;
+			char c;
+			do
+			{  // skip until end of line
+				c = input.get();
+			} while (input.good() && (c != '\n'));
 
-            for (std::size_t i{ index }; i < end_index; i++)
-            {
-                voxels.at(i) = value;
-            }
+			if (!input.good())
+			{
+				print_error();
+				return false;
+			}
+		}
+	}
 
-            if (value)
-            {
-                nr_voxels += count;
-            }
+	if (!done) {
+		std::cerr << "Error reading header" << std::endl;
+		return false;
+	}
+	if (depth == 0) {
+		std::cerr << "Missing dimensions in header." << std::endl;
+		return false;
+	}
 
-            index = end_index;
-        } 
-    }
+	std::size_t size = width * height * depth;
 
-    input.close();
-    
-    std::cout << "Read " << nr_voxels << " voxels" << std::endl;
+	voxels.resize(size);
+	std::fill(voxels.begin(), voxels.end(), 0.0f);
 
-    return true;
+	//
+	// read voxel data
+	//
+	byte value{}, count{};
+
+	std::size_t index{ 0 }, end_index{ 0 }, nr_voxels{ 0 };
+
+	input.unsetf(std::ifstream::skipws);  // need to read every byte now (!)
+	input >> value;  // read the linefeed char
+
+	if (!input.good())
+	{
+		print_error();
+		return false;
+	}
+
+	while ((end_index < size) && input.good()) {
+		input >> value >> count;
+
+		if (!input.good())
+		{
+			print_error();
+			return false;
+		}
+		else
+		{
+			end_index = index + count;
+
+			if (end_index > size)
+			{
+				std::cerr << "Too many values in voxel. Size is incorrect" << std::endl;
+				return false;
+			}
+
+			for (std::size_t i{ index }; i < end_index; i++)
+			{
+				voxels.at(i) = static_cast<Voxels::value_type>(value);
+			}
+
+			if (value)
+			{
+				nr_voxels += count;
+			}
+
+			index = end_index;
+		}
+	}
+
+	input.close();
+
+	std::cout << "Read " << nr_voxels << " voxels" << std::endl;
+
+	return true;
 }
