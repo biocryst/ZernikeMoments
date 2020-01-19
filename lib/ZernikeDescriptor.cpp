@@ -1,22 +1,22 @@
 /*
 
-                          3D Zernike Moments
-    Copyright (C) 2003 by Computer Graphics Group, University of Bonn
-           http://www.cg.cs.uni-bonn.de/project-pages/3dsearch/
+						  3D Zernike Moments
+	Copyright (C) 2003 by Computer Graphics Group, University of Bonn
+		   http://www.cg.cs.uni-bonn.de/project-pages/3dsearch/
 
 Code by Marcin Novotni:     marcin@cs.uni-bonn.de
 
 for more information, see the paper:
 
 @inproceedings{novotni-2003-3d,
-    author = {M. Novotni and R. Klein},
-    title = {3{D} {Z}ernike Descriptors for Content Based Shape Retrieval},
-    booktitle = {The 8th ACM Symposium on Solid Modeling and Applications},
-    pages = {216--225},
-    year = {2003},
-    month = {June},
-    institution = {Universit\"{a}t Bonn},
-    conference = {The 8th ACM Symposium on Solid Modeling and Applications, June 16-20, Seattle, WA}
+	author = {M. Novotni and R. Klein},
+	title = {3{D} {Z}ernike Descriptors for Content Based Shape Retrieval},
+	booktitle = {The 8th ACM Symposium on Solid Modeling and Applications},
+	pages = {216--225},
+	year = {2003},
+	month = {June},
+	institution = {Universit\"{a}t Bonn},
+	conference = {The 8th ACM Symposium on Solid Modeling and Applications, June 16-20, Seattle, WA}
 }
  *---------------------------------------------------------------------------*
  *                                                                           *
@@ -41,37 +41,37 @@ for more information, see the paper:
 #include "ZernikeDescriptor.h"
 
 template<class T, class TIn>
-ZernikeDescriptor<T, TIn>::ZernikeDescriptor (T* _voxels, int _dim, int _order) :
-    voxels_ (_voxels), dim_ (_dim), order_ (_order)
+ZernikeDescriptor<T, TIn>::ZernikeDescriptor(T* _voxels, int _dim, int _order) :
+	voxels_(_voxels), dim_(_dim), order_(_order)
 {
-    ComputeNormalization ();
-    NormalizeGrid ();
+	ComputeNormalization();
+	NormalizeGrid();
 
-    ComputeMoments ();
-    ComputeInvariants ();
+	ComputeMoments();
+	ComputeInvariants();
 }
 
 template<class T, class TIn>
-ZernikeDescriptor<T, TIn>::ZernikeDescriptor (const char* _rawName, int _order) : order_ (_order)
+ZernikeDescriptor<T, TIn>::ZernikeDescriptor(const char* _rawName, int _order) : order_(_order)
 {
-    voxels_ =  ReadGrid (_rawName, dim_);
+	voxels_ = ReadGrid(_rawName, dim_);
 
-    // scale + translation normalization
-    ComputeNormalization ();
-    NormalizeGrid ();
+	// scale + translation normalization
+	ComputeNormalization();
+	NormalizeGrid();
 
-    ComputeMoments ();
-    ComputeInvariants ();
+	ComputeMoments();
+	ComputeInvariants();
 }
 
 template<class T, class TIn>
-void ZernikeDescriptor<T, TIn>::ComputeMoments ()
+void ZernikeDescriptor<T, TIn>::ComputeMoments()
 {
-    gm_.Init (voxels_, dim_, dim_, dim_, xCOG_, yCOG_, zCOG_, scale_, order_);
+	gm_.Init(voxels_, dim_, dim_, dim_, xCOG_, yCOG_, zCOG_, scale_, order_);
 
-    // Zernike moments
-    zm_.Init (order_, gm_);
-    zm_.Compute ();
+	// Zernike moments
+	zm_.Init(order_, gm_);
+	zm_.Compute();
 }
 
 /**
@@ -80,35 +80,35 @@ void ZernikeDescriptor<T, TIn>::ComputeMoments ()
  * outside the unit ball are set to zero.
  */
 template<class T, class TIn>
-void ZernikeDescriptor<T, TIn>::NormalizeGrid ()
+void ZernikeDescriptor<T, TIn>::NormalizeGrid()
 {
-    T point[3];
+	T point[3];
 
-    // it is easier to work with squared radius -> no sqrt required
-    T radius = (T)1 / scale_;
-    T sqrRadius = radius * radius;
+	// it is easier to work with squared radius -> no sqrt required
+	T radius = (T)1 / scale_;
+	T sqrRadius = radius * radius;
 
-    for (int x=0; x<dim_; ++x)
-    {
-        for (int y=0; y<dim_; ++y)
-        {
-            for (int z=0; z<dim_; ++z)
-            {
-                if (voxels_[(z*dim_ + y)*dim_ + x] != (T)0)
-                {
-                    point[0] = (T)x - xCOG_;
-                    point[1] = (T)y - yCOG_;
-                    point[2] = (T)z - zCOG_;
+	for (int x = 0; x < dim_; ++x)
+	{
+		for (int y = 0; y < dim_; ++y)
+		{
+			for (int z = 0; z < dim_; ++z)
+			{
+				if (voxels_[(z * dim_ + y) * dim_ + x] != (T)0)
+				{
+					point[0] = (T)x - xCOG_;
+					point[1] = (T)y - yCOG_;
+					point[2] = (T)z - zCOG_;
 
-                    T sqrLen = point[0]*point[0] + point[1]*point[1] + point[2]*point[2];
-                    if (sqrLen > sqrRadius)
-                    {
-                        voxels_[(z*dim_ + y)*dim_ + x] = 0.0;
-                    }
-                }
-            }
-        }
-    }
+					T sqrLen = point[0] * point[0] + point[1] * point[1] + point[2] * point[2];
+					if (sqrLen > sqrRadius)
+					{
+						voxels_[(z * dim_ + y) * dim_ + x] = 0.0;
+					}
+				}
+			}
+		}
+	}
 }
 
 /**
@@ -116,31 +116,31 @@ void ZernikeDescriptor<T, TIn>::NormalizeGrid ()
  * moments and a bounding sphere around the cog.
  */
 template<class T, class TIn>
-void ZernikeDescriptor<T, TIn>::ComputeNormalization ()
+void ZernikeDescriptor<T, TIn>::ComputeNormalization()
 {
-    ScaledGeometricalMoments<T, T> gm (voxels_, dim_, dim_, dim_, 0.0, 0.0, 0.0, 1.0);
+	ScaledGeometricalMoments<T, T> gm(voxels_, dim_, dim_, dim_, 0.0, 0.0, 0.0, 1.0);
 
-    // compute the geometrical transform for no translation and scaling, first
-    // to get the 0'th and 1'st order properties of the function
-    //gm.Compute ();
+	// compute the geometrical transform for no translation and scaling, first
+	// to get the 0'th and 1'st order properties of the function
+	//gm.Compute ();
 
-    // 0'th order moments -> normalization
-    // 1'st order moments -> center of gravity
-    zeroMoment_ = gm.GetMoment (0, 0, 0);
-    xCOG_ = gm.GetMoment (1, 0, 0) / zeroMoment_;
-    yCOG_ = gm.GetMoment (0, 1, 0) / zeroMoment_;
-    zCOG_ = gm.GetMoment (0, 0, 1) / zeroMoment_;
+	// 0'th order moments -> normalization
+	// 1'st order moments -> center of gravity
+	zeroMoment_ = gm.GetMoment(0, 0, 0);
+	xCOG_ = gm.GetMoment(1, 0, 0) / zeroMoment_;
+	yCOG_ = gm.GetMoment(0, 1, 0) / zeroMoment_;
+	zCOG_ = gm.GetMoment(0, 0, 1) / zeroMoment_;
 
-    // scaling, so that the function gets mapped into the unit sphere
+	// scaling, so that the function gets mapped into the unit sphere
 
-    //T recScale = ComputeScale_BoundingSphere (voxels_, dim_, xCOG_, yCOG_, zCOG_);
-    T recScale = 2.0 * ComputeScale_RadiusVar (voxels_, dim_, xCOG_, yCOG_, zCOG_);
-    if (recScale == 0.0)
-    {
-        std::cerr << "\nNo voxels in grid!\n";
-        exit (-1);
-    }
-    scale_ = (T)1 / recScale;
+	//T recScale = ComputeScale_BoundingSphere (voxels_, dim_, xCOG_, yCOG_, zCOG_);
+	T recScale = 2.0 * ComputeScale_RadiusVar(voxels_, dim_, xCOG_, yCOG_, zCOG_);
+	if (recScale == 0.0)
+	{
+		std::cerr << "\nNo voxels in grid!\n";
+		exit(-1);
+	}
+	scale_ = (T)1 / recScale;
 }
 
 /**
@@ -149,35 +149,35 @@ void ZernikeDescriptor<T, TIn>::ComputeNormalization ()
  * it is assumed that the dimensions of the grid are equal along each axis.
  */
 template<class T, class TIn>
-T* ZernikeDescriptor<T, TIn>::ReadGrid (const char* _fname, int& _dim_)
+T* ZernikeDescriptor<T, TIn>::ReadGrid(const char* _fname, int& _dim_)
 {
-    std::ifstream infile (_fname, std::ios_base::binary | std::ios_base::in);
-    if (!infile)
-    {
-        std::cerr << "Cannot open " << _fname << " for reading.\n";
-        exit (-1);
-    }
+	std::ifstream infile(_fname, std::ios_base::binary | std::ios_base::in);
+	if (!infile)
+	{
+		std::cerr << "Cannot open " << _fname << " for reading.\n";
+		exit(-1);
+	}
 
-    vector<T> tempGrid;
-    TIn temp;
+	vector<T> tempGrid;
+	TIn temp;
 
-    // read the grid values
-    while (infile.read ((char*)(&temp), sizeof (TIn)))
-    {
-        tempGrid.push_back ((T)temp);
-    }
+	// read the grid values
+	while (infile.read((char*)(&temp), sizeof(TIn)))
+	{
+		tempGrid.push_back((T)temp);
+	}
 
-    int d = tempGrid.size ();
-    double f = pow ((double)d, 1.0/3.0);
-    _dim_ = floor (f+0.5);
+	int d = tempGrid.size();
+	double f = pow((double)d, 1.0 / 3.0);
+	_dim_ = floor(f + 0.5);
 
-    T* result = new T [d];
-    for (int i=0; i<d; ++i)
-    {
-        result[i] = tempGrid[i];
-    }
+	T* result = new T[d];
+	for (int i = 0; i < d; ++i)
+	{
+		result[i] = tempGrid[i];
+	}
 
-    return result;
+	return result;
 }
 
 /**
@@ -185,36 +185,36 @@ T* ZernikeDescriptor<T, TIn>::ReadGrid (const char* _fname, int& _dim_)
  * I.e. I think a binary volume is implicitly assumed here.
  */
 template<class T, class TIn>
-double ZernikeDescriptor<T, TIn>::ComputeScale_BoundingSphere (T* _voxels, int _dim, T _xCOG, T _yCOG, T _zCOG)
+double ZernikeDescriptor<T, TIn>::ComputeScale_BoundingSphere(T* _voxels, int _dim, T _xCOG, T _yCOG, T _zCOG)
 {
-    T max = (T)0;
+	T max = (T)0;
 
-    // the edge length of the voxel grid in voxel units
-    int d = _dim;
+	// the edge length of the voxel grid in voxel units
+	int d = _dim;
 
-    for (int x=0; x<d; ++x)
-    {
-        for (int y=0; y<d; ++y)
-        {
-            for (int z=0; z<d; ++z)
-            {
-                if (_voxels[(z + d * y) * d + x] > 0.9)
-                {
-                    T mx = (T)x - _xCOG;
-                    T my = (T)y - _yCOG;
-                    T mz = (T)z - _zCOG;
-                    T temp = mx*mx + my*my + mz*mz;
+	for (int x = 0; x < d; ++x)
+	{
+		for (int y = 0; y < d; ++y)
+		{
+			for (int z = 0; z < d; ++z)
+			{
+				if (_voxels[(z + d * y) * d + x] > 0.9)
+				{
+					T mx = (T)x - _xCOG;
+					T my = (T)y - _yCOG;
+					T mz = (T)z - _zCOG;
+					T temp = mx * mx + my * my + mz * mz;
 
-                    if (temp > max)
-                    {
-                        max = temp;
-                    }
-                }
-            }
-        }
-    }
+					if (temp > max)
+					{
+						max = temp;
+					}
+				}
+			}
+		}
+	}
 
-    return std::sqrt (max);
+	return std::sqrt(max);
 }
 
 /**
@@ -222,115 +222,119 @@ double ZernikeDescriptor<T, TIn>::ComputeScale_BoundingSphere (T* _voxels, int _
  * I.e. I think a binary volume is implicitly assumed here.
  */
 template<class T, class TIn>
-double ZernikeDescriptor<T, TIn>::ComputeScale_RadiusVar (T* _voxels, int _dim, T _xCOG, T _yCOG, T _zCOG)
+double ZernikeDescriptor<T, TIn>::ComputeScale_RadiusVar(T* _voxels, int _dim, T _xCOG, T _yCOG, T _zCOG)
 {
-    // the edge length of the voxel grid in voxel units
-    int d = _dim;
+	// the edge length of the voxel grid in voxel units
+	int d = _dim;
 
-    int nVoxels = 0;
+	int nVoxels = 0;
 
-    T sum = 0.0;
+	T sum = 0.0;
 
-    for (int x=0; x<d; ++x)
-    {
-        for (int y=0; y<d; ++y)
-        {
-            for (int z=0; z<d; ++z)
-            {
-                if (_voxels[(z + d * y) * d + x] > 0.9)
-                {
-                    T mx = (T)x - _xCOG;
-                    T my = (T)y - _yCOG;
-                    T mz = (T)z - _zCOG;
-                    T temp = mx*mx + my*my + mz*mz;
+	for (int x = 0; x < d; ++x)
+	{
+		for (int y = 0; y < d; ++y)
+		{
+			for (int z = 0; z < d; ++z)
+			{
+				if (_voxels[(z + d * y) * d + x] > 0.9)
+				{
+					T mx = (T)x - _xCOG;
+					T my = (T)y - _yCOG;
+					T mz = (T)z - _zCOG;
+					T temp = mx * mx + my * my + mz * mz;
 
-                    sum += temp;
+					sum += temp;
 
-                    nVoxels++;
-                }
-            }
-        }
-    }
+					nVoxels++;
+				}
+			}
+		}
+	}
 
-    T retval = sqrt(sum/nVoxels);
+	T retval = sqrt(sum / nVoxels);
 
-    return retval;
+	return retval;
 }
-
 
 template<class T, class TIn>
-void ZernikeDescriptor<T, TIn>::Reconstruct (ComplexT3D& _grid, int _minN, int _maxN, int _minL, int _maxL)
+void ZernikeDescriptor<T, TIn>::Reconstruct(ComplexT3D& _grid, int _minN, int _maxN, int _minL, int _maxL)
 {
-    // the scaling between the reconstruction and original grid
-    T fac = (T)(_grid.size ()) / (T)dim_;
+	// the scaling between the reconstruction and original grid
+	T fac = (T)(_grid.size()) / (T)dim_;
 
-    zm_.Reconstruct (_grid,         // result grid
-                     xCOG_*fac,     // center of gravity properly scaled
-                     yCOG_*fac,
-                     zCOG_*fac,
-                     scale_/fac,    // scaling factor
-                     _minN, _maxN,  // min and max freq. components to be reconstructed
-                     _minL, _maxL);
+	zm_.Reconstruct(_grid,         // result grid
+		xCOG_ * fac,     // center of gravity properly scaled
+		yCOG_ * fac,
+		zCOG_ * fac,
+		scale_ / fac,    // scaling factor
+		_minN, _maxN,  // min and max freq. components to be reconstructed
+		_minL, _maxL);
 }
-
 
 /**
  * Computes the Zernike moment based invariants, i.e. the norms of vectors with
  * components of Z_nl^m with m being the running index.
  */
 template<class T, class TIn>
-void ZernikeDescriptor<T,TIn>::ComputeInvariants ()
+void ZernikeDescriptor<T, TIn>::ComputeInvariants()
 {
-    //invariants_.resize (order_ + 1);
-    invariants_.clear ();
-    for (int n=0; n<order_+1; ++n)
-    {
-        //invariants_[n].resize (n/2 + 1);
+	//invariants_.resize (order_ + 1);
+	invariants_.clear();
+	for (int n = 0; n < order_ + 1; ++n)
+	{
+		//invariants_[n].resize (n/2 + 1);
 
-        T sum = (T)0;
-        int l0 = n % 2, li = 0;
+		T sum = (T)0;
+		int l0 = n % 2, li = 0;
 
-        for (int l = n % 2; l<=n; ++li, l+=2)
-        {
-            for (int m=-l; m<=l; ++m)
-            {
-                ComplexT moment = zm_.GetMoment (n, l, m);
-                sum += std::norm (moment);
-            }
+		for (int l = n % 2; l <= n; ++li, l += 2)
+		{
+			for (int m = -l; m <= l; ++m)
+			{
+				ComplexT moment = zm_.GetMoment(n, l, m);
+				sum += std::norm(moment);
+			}
 
-            invariants_.push_back (sqrt (sum));
-            //invariants_[n][li] = std::sqrt (sum);
-        }
-    }
+			invariants_.push_back(sqrt(sum));
+			//invariants_[n][li] = std::sqrt (sum);
+		}
+	}
 }
 
-
 template<class T, class TIn>
-void ZernikeDescriptor<T,TIn>::SaveInvariants (const char* _fName)
+bool ZernikeDescriptor<T, TIn>::SaveInvariants(const std::string& path_to_file)
 {
-    std::ofstream outfile (_fName, std::ios_base::binary | std::ios_base::out);
+	std::ofstream outfile(path_to_file, std::ios_base::out);
 
-    float temp;
+	if (!outfile.is_open())
+	{
+		std::cerr << "Cannot open " << path_to_file << std::endl;
+		return false;
+	}
 
-    //assert (invariants_.size () == (order_ + 1));
+	T temp;
 
-    // write the invariants
-    //for (int n=0; n<order_+1; ++n)
-    //{
-    //    int l0 = n % 2, li = 0;
-    //    for (int l=l0; l<=n; l+=2, ++li)
-    //    {
-    //        temp = (float)invariants_[n][li];
-    //        outfile.write ((char*)(&temp), sizeof(float));
-    //    }
-    //}
+	std::size_t dim = invariants_.size();
 
-    int dim = invariants_.size ();
-    outfile.write ((char*)(&dim), sizeof(int));
+	outfile << dim << ' ';
 
-    for (int i=0; i<dim; ++i)
-    {
-        temp = invariants_[i];
-        outfile.write ((char*)(&temp), sizeof(float));
-    }
+	if (!outfile.good())
+	{
+		std::cerr << "Unexpected IO error. Cannot write to " << path_to_file << std::endl;
+		return false;
+	}
+
+	for (size_t i{ 0 }; i < dim; ++i)
+	{
+		outfile << invariants_[i] << ' ';
+
+		if (!outfile.good())
+		{
+			std::cerr << "Unexpected IO error with. Cannot write to " << path_to_file << std::endl;
+			return false;
+		}
+	}
+
+	return true;
 }

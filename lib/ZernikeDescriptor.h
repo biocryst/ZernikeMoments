@@ -41,8 +41,7 @@ for more information, see the paper:
 #define ZERNIKEDESCRIPTOR_H
 
 // ---- std includes ---
-#include <vector>
-#include <iostream>
+#include "stdafx.h"
 
 // ---- local program includes ----
 //#include "GeometricalMoments.h"
@@ -99,8 +98,8 @@ public:
     /**
      * Saves the computed invariants into a binary file
      */
-    void SaveInvariants (
-        const char* _fName      /**< name of the output file */
+    bool SaveInvariants (
+        const std::string & path_to_file      /**< name of the output file */
         );
     /// Access to invariants
     T2D GetInvariants ();
