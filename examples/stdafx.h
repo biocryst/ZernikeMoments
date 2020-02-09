@@ -8,6 +8,7 @@
 #include <thread>
 #include <atomic>
 #include <chrono>
+#include <type_traits>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>

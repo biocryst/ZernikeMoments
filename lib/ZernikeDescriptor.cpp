@@ -313,8 +313,6 @@ bool ZernikeDescriptor<T, TIn>::SaveInvariants(const std::string& path_to_file)
 		return false;
 	}
 
-	T temp;
-
 	std::size_t dim = invariants_.size();
 
 	outfile << dim << ' ';

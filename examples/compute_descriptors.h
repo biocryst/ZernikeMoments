@@ -1,7 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
-#include "binvox_reader.h"
+#include "binvox_reader.hpp"
 
 namespace parallel
 {
