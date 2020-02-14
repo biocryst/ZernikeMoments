@@ -86,7 +86,7 @@ auto parse_cli_args(int argc, char** argv)
 		(dir.c_str(), value<string>(), "Path to directory with .binvox files.")
 		(order.c_str(), value<int>(), "Maximum order of Zernike moments. N in original paper.")
 		(thred_arg.c_str(), value<int>()->default_value(2), "Maximum number of threads.")
-		(queue_arg.c_str(), value<int>()->default_value(500), "Maximum size of queue of file paths when recursive scanning directory. If size of queue is greater than parameter than scanning thread sleeps.")
+		(queue_arg.c_str(), value<int>()->default_value(500), "Maximum size of queue of file paths when recursive scanning directory. If size of queue is greater than parameter then scanning thread sleeps.")
 		;
 
 	variables_map vm;
@@ -179,7 +179,7 @@ int main(int argc, char** argv)
 			return 1;
 		}
 	}
-	catch (error & err)
+	catch (const error & err)
 	{
 		cerr << err.what() << endl;
 		return 1;
