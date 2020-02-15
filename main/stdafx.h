@@ -20,5 +20,6 @@
 #include <boost/log/sources/severity_channel_logger.hpp>
 #include <boost/log/trivial.hpp>
 #include <boost/log/sources/global_logger_storage.hpp>
+#include <boost/math/special_functions/binomial.hpp>
 
 #include "ZernikeDescriptor.h"
