@@ -9,6 +9,7 @@
 #include <atomic>
 #include <chrono>
 #include <type_traits>
+#include <cassert>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
