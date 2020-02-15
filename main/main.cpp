@@ -81,6 +81,7 @@ void init_logg_settings_from_file(const path& path_to_config)
 
     // Add some attributes
     boost::log::core::get()->add_global_attribute("TimeStamp", boost::log::attributes::local_clock());
+    boost::log::core::get()->add_global_attribute("ThreadID", boost::log::attributes::current_thread_id());
 }
 
 auto parse_cli_args(int argc, char** argv)

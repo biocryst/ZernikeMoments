@@ -64,8 +64,6 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
 
     logging::logger_t& logger = logging::logger_main::get();
 
-    BOOST_LOG_SCOPED_THREAD_ATTR("ThreadID", boost::log::attributes::current_thread_id());
-
     while (true)
     {
         if (!queue.pop(path_to_voxel))
@@ -81,7 +79,7 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
         {
             if (!io::binvox::read_binvox(path_to_voxel, voxels, dim))
             {
-                BOOST_LOG_SEV(logger, logging::severity_t::error) << "Cannot read binvox from " << path_to_voxel << endl;
+                BOOST_LOG_SEV(logger, logging::severity_t::warning) << "Cannot read binvox from " << path_to_voxel << endl;
             }
 
             path new_path = path_to_voxel;
@@ -93,7 +91,7 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
 
             if (!zd.SaveInvariants(new_path.string()))
             {
-                BOOST_LOG_SEV(logger, logging::severity_t::error) << "Cannot save invariants to file: " << new_path << endl;
+                BOOST_LOG_SEV(logger, logging::severity_t::warning) << "Cannot save invariants to file: " << new_path << endl;
             }
             else
             {
