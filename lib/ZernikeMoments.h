@@ -44,7 +44,7 @@ for more information, see the paper:
 
 // ----- local program includes -----
 #include "Factorial.h"
-#include "Binomial.h"
+//#include "Binomial.h"
 #include "ScaledGeometricMoments.h"
 
 // ----- std includes -----
@@ -63,9 +63,9 @@ struct ComplexCoeff
 {
     typedef     std::complex<T>     ValueT;
 
-    ComplexCoeff (int, int, int, const ValueT&);
-    ComplexCoeff (const ComplexCoeff<T>& _cc);
-    ComplexCoeff ();
+    ComplexCoeff(int, int, int, const ValueT&);
+    ComplexCoeff(const ComplexCoeff<T>& _cc);
+    ComplexCoeff();
 
     int                 p_, q_, r_;
     ValueT     value_;
@@ -91,40 +91,39 @@ public:
     typedef ComplexCoeff<T>                      ComplexCoeffT;
     typedef vector<vector<vector<vector<ComplexCoeffT> > > >    ComplexCoeffT4D;
 
-
 public:
     // ---- public member functions ----
-    ZernikeMoments (int _order, ScaledGeometricalMoments<VoxelT,MomentT>& _gm);
-    ZernikeMoments ();
+    ZernikeMoments(int _order, ScaledGeometricalMoments<VoxelT, MomentT>& _gm);
+    ZernikeMoments();
 
     /* Todo: Init() doesn't depend on the geomentrical moments.
      * Removing the  parameter and moving it to Compute() will make the class more efficient to reuse to
      * compute ZM for several objects at once.
      */
-    void Init (int _order, ScaledGeometricalMoments<VoxelT,MomentT>& _gm);
-    void Compute ();
+    void Init(int _order, ScaledGeometricalMoments<VoxelT, MomentT>& _gm);
+    void Compute();
 
-    ComplexT GetMoment (int _n, int _l, int _m);
+    ComplexT GetMoment(int _n, int _l, int _m);
 
     // ---- debug functions/arguments ----
-    void Reconstruct (ComplexT3D&   _grid,                // grid containing the reconstructed function
-                      T             _xCOG,                // center of gravity
-                      T             _yCOG,
-                      T             _zCOG,
-                      T             _scale,               // scaling factor to map into unit ball
-                      int           _minN = 0,            // min value for n freq index
-                      int           _maxN = 100,          // min value for n freq index
-                      int           _minL = 0,            // min value for l freq index
-                      int           _maxL = 100);         // max value for l freq index
+    void Reconstruct(ComplexT3D& _grid,                // grid containing the reconstructed function
+        T             _xCOG,                // center of gravity
+        T             _yCOG,
+        T             _zCOG,
+        T             _scale,               // scaling factor to map into unit ball
+        int           _minN = 0,            // min value for n freq index
+        int           _maxN = 100,          // min value for n freq index
+        int           _minL = 0,            // min value for l freq index
+        int           _maxL = 100);         // max value for l freq index
 
-    void NormalizeGridValues (ComplexT3D& _grid);
-    void CheckOrthonormality (int _n1, int _l1, int _m1, int _n2, int _l2, int _m2);
+    void NormalizeGridValues(ComplexT3D& _grid);
+    void CheckOrthonormality(int _n1, int _l1, int _m1, int _n2, int _l2, int _m2);
 
 private:
     // ---- private member functions ----
-    void ComputeCs ();
-    void ComputeQs ();
-    void ComputeGCoefficients ();
+    void ComputeCs();
+    void ComputeQs();
+    void ComputeGCoefficients();
 
     // ---- private attributes -----
     ComplexCoeffT4D     gCoeffs_;           // coefficients of the geometric moments
@@ -132,12 +131,12 @@ private:
     T3D                 qs_;                // q coefficients (radial polynomial normalization)
     T2D                 cs_;                // c coefficients (harmonic polynomial normalization)
 
-    ScaledGeometricalMoments<VoxelT,MomentT> gm_;
+    ScaledGeometricalMoments<VoxelT, MomentT> gm_;
     int                 order_;             // := max{n} according to indexing of Zernike polynomials
 
     // ---- debug functions/arguments ----
-    void PrintGrid (ComplexT3D& _grid);
-    T EvalMonomialIntegral (int _p, int _q, int _r, int _dim);
+    void PrintGrid(ComplexT3D& _grid);
+    T EvalMonomialIntegral(int _p, int _q, int _r, int _dim);
 };
 
 #include "ZernikeMoments.inl"
