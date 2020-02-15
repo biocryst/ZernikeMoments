@@ -185,7 +185,7 @@ bool validate_args(const variables_map& args, const options_description& desc)
 
     if (status(log_sett).type() != file_type::regular_file)
     {
-        cerr << input_dir << " is not file or does not exist." << endl;
+        cerr << log_sett_arg_name << " is not file or does not exist." << endl;
         return false;
     }
 
