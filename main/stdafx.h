@@ -13,5 +13,11 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <boost/lockfree/stack.hpp>
+#include <boost/log/common.hpp>
+#include <boost/log/attributes.hpp>
+#include <boost/log/utility/setup/from_stream.hpp>
+#include <boost/log/sources/severity_channel_logger.hpp>
+#include <boost/log/trivial.hpp>
+#include <boost/log/sources/global_logger_storage.hpp>
 
 #include "ZernikeDescriptor.h"

@@ -3,7 +3,7 @@ find_package(Boost 1.71 REQUIRED COMPONENTS filesystem program_options log)
 
 set(_precompiled_header "stdafx.h")
 
-add_executable(zernike3d main.cpp binvox_reader.hpp stdafx.cpp stdafx.h compute_descriptors.cpp compute_descriptors.h)
+add_executable(zernike3d main.cpp binvox_reader.hpp stdafx.cpp stdafx.h compute_descriptors.cpp compute_descriptors.h loggers.h)
 
 if(MSVC)
 target_compile_options(zernike3d PRIVATE /Yu${_precompiled_header} PRIVATE /FI${_precompiled_header})

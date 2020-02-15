@@ -1,6 +1,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include "loggers.h"
 
 namespace io
 {
@@ -12,29 +13,17 @@ namespace io
 		{
 			static_assert(std::is_integral<VoxelType>::value || std::is_floating_point<VoxelType>::value, "Voxel type must be integral or float");
 
+			logging::logger_t& logger = logging::logger_io::get();
+
 			using byte = unsigned char;
+
+			dim = 0;
 
 			std::ifstream input{ path_to_file.string(), std::ios::in | std::ios::binary };
 
-			auto print_error = [&input]()
-			{
-				if (input.eof())
-				{
-					std::cerr << "Unexpected end of file." << std::endl;
-				}
-				else if ((input.rdstate() & std::ifstream::badbit) != 0)
-				{
-					std::cerr << "Either no characters were extracted, or the characters extracted could not be interpreted as a valid value of the appropriate type." << std::endl;
-				}
-				else if ((input.rdstate() & std::ifstream::failbit) != 0)
-				{
-					std::cerr << "Error on stream." << std::endl;
-				}
-			};
-
 			if (!input.is_open())
 			{
-				std::cerr << "Cannot open file " << path_to_file << std::endl;
+				BOOST_LOG_SEV(logger, logging::severity_t::error) << "Cannot open file " << path_to_file << std::endl;
 				return false;
 			}
 
@@ -45,12 +34,12 @@ namespace io
 
 			if (!input.good())
 			{
-				print_error();
 				return false;
 			}
 
-			if (line != "#binvox") {
-				std::cerr << "Error: first line reads [" << line << "] instead of [#binvox]" << std::endl;
+			if (line != "#binvox")
+			{
+				BOOST_LOG_SEV(logger, logging::severity_t::error) << "Error: first line reads [" << line << "] instead of [#binvox]. Probably it is not binvox format." << std::endl;
 				return false;
 			}
 
@@ -60,22 +49,21 @@ namespace io
 
 			if (!input.good())
 			{
-				print_error();
 				return false;
 			}
 
-			std::cout << "Reading binvox version: " << version << std::endl;
+			BOOST_LOG_SEV(logger, logging::severity_t::debug) << "Reading binvox version: " << version << std::endl;
 
 			std::size_t depth{ 0 }, height{}, width{};
 
 			bool done{ false };
 
-			while (input.good() && !done) {
+			while (input.good() && !done)
+			{
 				input >> line;
 
 				if (!input.good())
 				{
-					print_error();
 					return false;
 				}
 
@@ -89,13 +77,12 @@ namespace io
 
 					if (!input.good())
 					{
-						print_error();
 						return false;
 					}
 
 					if (depth != height || depth != width)
 					{
-						std::cerr << "Voxel has unequal dimensions." << std::endl;
+						BOOST_LOG_SEV(logger, logging::severity_t::error) << "Voxel has unequal dimensions." << std::endl;
 						return false;
 					}
 					else
@@ -105,7 +92,7 @@ namespace io
 				}
 				else
 				{
-					std::cerr << "  unrecognized keyword [" << line << "], skipping" << std::endl;
+					BOOST_LOG_SEV(logger, logging::severity_t::error) << "Unrecognized keyword [" << line << "], skipping" << std::endl;
 					char c;
 					do
 					{  // skip until end of line
@@ -114,24 +101,27 @@ namespace io
 
 					if (!input.good())
 					{
-						print_error();
 						return false;
 					}
 				}
 			}
 
-			if (!done) {
-				std::cerr << "Error reading header" << std::endl;
+			if (!done)
+			{
+				BOOST_LOG_SEV(logger, logging::severity_t::error) << "Error reading header" << std::endl;
 				return false;
 			}
-			if (depth == 0) {
-				std::cerr << "Missing dimensions in header." << std::endl;
+
+			if (depth == 0)
+			{
+				BOOST_LOG_SEV(logger, logging::severity_t::error) << "Missing dimensions in header." << std::endl;
 				return false;
 			}
 
 			std::size_t size = width * height * depth;
 
 			voxels.resize(size);
+
 			std::fill(voxels.begin(), voxels.end(), VoxelType{});
 
 			//
@@ -146,16 +136,15 @@ namespace io
 
 			if (!input.good())
 			{
-				print_error();
 				return false;
 			}
 
-			while ((end_index < size) && input.good()) {
+			while ((end_index < size) && input.good())
+			{
 				input >> value >> count;
 
 				if (!input.good())
 				{
-					print_error();
 					return false;
 				}
 				else
@@ -164,7 +153,7 @@ namespace io
 
 					if (end_index > size)
 					{
-						std::cerr << "Too many values in voxel. Size is incorrect" << std::endl;
+						BOOST_LOG_SEV(logger, logging::severity_t::error) << "Too many values in voxel. Size is incorrect" << std::endl;
 						return false;
 					}
 
@@ -184,7 +173,7 @@ namespace io
 
 			input.close();
 
-			std::cout << "Read " << nr_voxels << " voxels" << std::endl;
+			BOOST_LOG_SEV(logger, logging::severity_t::info) << "Read " << nr_voxels << " voxels" << std::endl;
 
 			return true;
 		}
