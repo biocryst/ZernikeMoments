@@ -43,8 +43,6 @@ for more information, see the paper:
 #pragma warning (disable : 4267)
 
 // ----- local program includes -----
-#include "Factorial.h"
-//#include "Binomial.h"
 #include "ScaledGeometricMoments.h"
 
 // ----- std includes -----
