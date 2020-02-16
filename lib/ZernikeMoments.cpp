@@ -105,6 +105,8 @@ void ZernikeMoments<VoxelT, MomentT>::Init(int _order, ScaledGeometricalMoments<
 template<class VoxelT, class MomentT>
 void ZernikeMoments<VoxelT, MomentT>::ComputeCs()
 {
+    using namespace boost::math;
+
     /*
      indexing:
        l goes from 0 to n
@@ -118,11 +120,14 @@ void ZernikeMoments<VoxelT, MomentT>::ComputeCs()
         cs_[l].resize(l + 1);
         for (size_t m = 0; m <= l; ++m)
         {
-            T n_sqrt = ((T)2 * l + (T)1) *
-                Factorial<T>::Get(l + 1, l + m);
-            T d_sqrt = Factorial<T>::Get(l - m + 1, l);
+            /*         T n_sqrt = ((T)2 * l + (T)1) *
+                         Factorial<T>::Get(l + 1, l + m);
+                     T d_sqrt = Factorial<T>::Get(l - m + 1, l);*/
 
-            cs_[l][m] = sqrt(n_sqrt / d_sqrt);
+            T n_sqrt = static_cast<T>((2 * l + 1) * rising_factorial(l + 1, m));
+            T d_sqrt = static_cast<T>(rising_factorial(l - m + 1, m));
+
+            cs_[l][m] = std::sqrt(n_sqrt / d_sqrt);
         }
     }
 }
@@ -284,10 +289,9 @@ void ZernikeMoments<VoxelT, MomentT>::Compute()
     // geometrical moments have to be computed first
     if (!order_)
     {
-        std::cerr << "ZernikeMoments<VoxelT,MomentT>::ComputeZernikeMoments (): attempting to \
+        throw std::runtime_error("ZernikeMoments<VoxelT,MomentT>::ComputeZernikeMoments (): attempting to \
                      compute Zernike moments without setting valid geometrical \
-                     moments first. \nExiting...\n";
-        exit(-1);
+                     moments first.");
     }
 
     /*
@@ -298,6 +302,8 @@ void ZernikeMoments<VoxelT, MomentT>::Compute()
     */
 
     T nullMoment;
+
+    constexpr T three_quarters_div_pi = boost::math::constants::three_quarters<T>() * 1 / boost::math::constants::pi<T>();
 
     zernikeMoments_.resize(order_ + 1);
     for (int n = 0; n <= order_; ++n)
@@ -324,7 +330,8 @@ void ZernikeMoments<VoxelT, MomentT>::Compute()
                     zm += std::conj(cc.value_) * gm_.GetMoment(cc.p_, cc.q_, cc.r_);
                 }
 
-                zm *= (T)(3.0 / (4.0 * PI));
+                zm *= three_quarters_div_pi;
+
                 if (n == 0 && l == 0 && m == 0)
                 {
                     // FixMe Unused variable! What is it for?
@@ -493,7 +500,8 @@ void ZernikeMoments<VoxelT, MomentT>::PrintGrid(ComplexT3D& _grid)
 
     std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
 
-    T max = (T)0;
+    T max = static_cast<T>(0);
+
     for (int k = 0; k < zD; ++k)
     {
         for (int j = 0; j < yD; ++j)
@@ -569,22 +577,24 @@ void ZernikeMoments<VoxelT, MomentT>::CheckOrthonormality(int _n1, int _l1, int 
 template<class VoxelT, class MomentT>
 MomentT ZernikeMoments<VoxelT, MomentT>::EvalMonomialIntegral(int _p, int _q, int _r, int _dim)
 {
-    T radius = (T)(_dim - 1) / (T)2;
-    T scale = std::pow((T)1 / radius, 3);
-    T center = (T)(_dim - 1) / (T)2;
+    T radius = static_cast<T>(_dim - 1) / static_cast <T>(2);
+    T scale = std::pow(static_cast <T>(1) / radius, 3);
+    T center = static_cast<T>(_dim - 1) / static_cast <T>(2);
 
-    T result = (T)0;
+    T result = static_cast<T>(0);
     T point[3];
+
+    constexpr T three_quarters_div_pi = boost::math::constants::three_quarters<T>() * 1 / boost::math::constants::pi<T>();
 
     for (int x = 0; x < _dim; ++x)
     {
-        point[0] = ((T)x - center) / radius;
+        point[0] = (static_cast<T>(x) - center) / radius;
         for (int y = 0; y < _dim; ++y)
         {
-            point[1] = ((T)y - center) / radius;
+            point[1] = (static_cast<T>(y) - center) / radius;
             for (int z = 0; z < _dim; ++z)
             {
-                point[2] = ((T)z - center) / radius;
+                point[2] = (static_cast<T>(z) - center) / radius;
 
                 if (point[0] * point[0] + point[1] * point[1] + point[2] * point[2] > (T)1)
                 {
@@ -598,6 +608,6 @@ MomentT ZernikeMoments<VoxelT, MomentT>::EvalMonomialIntegral(int _p, int _q, in
         }
     }
 
-    result *= (T)(3.0 / (4.0 * PI)) * scale;
+    result *= three_quarters_div_pi * scale;
     return result;
 }

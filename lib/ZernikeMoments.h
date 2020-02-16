@@ -52,8 +52,6 @@ for more information, see the paper:
 #include <set>
 #include <ios>
 
-#define PI 3.141592653589793
-
 /**
  * Struct representing a complex coefficient of a moment
  * of order (p_,q_,r_)

@@ -229,5 +229,7 @@ int main(int argc, char** argv)
 
     parallel::recursive_compute(input_directory, max_order, queue_size, thread_count);
 
+    boost::log::core::get()->remove_all_sinks();
+
     return 0;
 }

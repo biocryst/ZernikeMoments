@@ -53,7 +53,7 @@ for more information, see the paper:
  * Zernike moments. It provides also the implementation of invariant Zernike
  * descriptors, means of reconstruction of orig. function, etc.
  */
-template<class T, class TIn>
+template<class T>
 class ZernikeDescriptor
 {
 public:
@@ -63,7 +63,6 @@ public:
     /// 3D array of complex type
     typedef vector<vector<vector<ComplexT> > >      ComplexT3D;
 
-
     typedef vector<T>                               T1D;
     typedef vector<T1D>                             T2D;            // 2D array of T type
 
@@ -71,81 +70,75 @@ public:
     typedef ScaledGeometricalMoments<T, T>          ScaledGeometricalMomentsT;
     typedef ZernikeMoments<T, T>                    ZernikeMomentsT;
 
-public:
     // ---- public functions ----
-    ZernikeDescriptor (
-        const char* _rawName,       /**< binary input file name (contains a cubic grid)*/
-        int _order                  /**< the maximal order of the moments (N in paper) */
-        );
-    ZernikeDescriptor (
+    ZernikeDescriptor(
         T* _voxels,                 /**< the cubic voxel grid */
         int _dim,                   /**< dimension is $_dim^3$ */
         int _order                  /**< maximal order of the Zernike moments (N in paper) */
-        );
-    ZernikeDescriptor ();
+    );
+
+    ZernikeDescriptor();
 
     /**
         Reconstructs the original object from the 3D Zernike moments.
      */
-    void Reconstruct (
+    void Reconstruct(
         ComplexT3D& _grid,          /**< result grid as 3D complex stl vector */
         int _minN = 0,              /**< min value for n freq index */
         int _maxN = 100,            /**< max value for n freq index */
         int _minL = 0,              /**< min value for l freq index */
         int _maxL = 100             /**< max value for l freq index */
-        );
+    );
 
     /**
      * Saves the computed invariants into a binary file
      */
-    bool SaveInvariants (
-        const std::string & path_to_file      /**< name of the output file */
-        );
+    bool SaveInvariants(
+        const std::string& path_to_file      /**< name of the output file */
+    );
     /// Access to invariants
-    T2D GetInvariants ();
+    T2D GetInvariants();
 
 private:
     // ---- private helper functions ----
-    void NormalizeGrid ();
-    void ComputeNormalization ();
-    void ComputeMoments ();
-    void ComputeInvariants ();
-    void WriteGrid (
+    void NormalizeGrid();
+    void ComputeNormalization();
+    void ComputeMoments();
+    void ComputeInvariants();
+    void WriteGrid(
         ComplexT3D& _grid,
         const char* _fName);
 
-    double ComputeScale_BoundingSphere (
+    double ComputeScale_BoundingSphere(
         T* _voxels,
         int _dim,
         T _xCOG,
         T _yCOG,
         T _zCOG
-        );
-    double ComputeScale_RadiusVar (
+    );
+    double ComputeScale_RadiusVar(
         T* _voxels,
         int _dim,
         T _xCOG,
         T _yCOG,
         T _zCOG
-        );
+    );
 
-    T* ReadGrid (
+    T* ReadGrid(
         const char* _fname,
         int& _dim_);
-
-
 
 private:
     // ---- member variables ----
     int     order_;                 // maximal order of the moments to be computed (max{n})
     int     dim_;                   // length of the edge of the voxel grid (which is a cube)
 
-    T*      voxels_;                // 1D array containing the voxels
+    T* voxels_;                // 1D array containing the voxels
     T       zeroMoment_,            // zero order moment
-            xCOG_, yCOG_, zCOG_,    // center of gravity
-            scale_;                 // scaling factor mapping the function into the unit sphere
+        xCOG_, yCOG_, zCOG_,    // center of gravity
+        scale_;                 // scaling factor mapping the function into the unit sphere
 
-    //T2D                 invariants_;        // 2D vector of invariants under SO(3)
+//T2D                 invariants_;        // 2D vector of invariants under SO(3)
     T1D                 invariants_;        // 2D vector of invariants under SO(3)
 
     ZernikeMomentsT     zm_;
