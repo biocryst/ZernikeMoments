@@ -24,5 +24,3 @@
 #include <boost/math/special_functions/binomial.hpp>
 #include <boost/math/special_functions/factorials.hpp>
 #include <boost/math/constants/constants.hpp>
-
-#include "ZernikeDescriptor.h"

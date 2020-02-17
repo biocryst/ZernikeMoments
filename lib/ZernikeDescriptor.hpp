@@ -37,8 +37,7 @@ for more information, see the paper:
  *                                                                           *
 \*===========================================================================*/
 
-#ifndef ZERNIKEDESCRIPTOR_H
-#define ZERNIKEDESCRIPTOR_H
+#pragma once
 
 // ---- std includes ---
 #include "stdafx.h"
@@ -373,5 +372,3 @@ private:
     //CumulativeMomentsT  cm_;
     ScaledGeometricalMomentsT gm_;
 };
-
-#endif
