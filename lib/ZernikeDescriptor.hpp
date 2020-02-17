@@ -45,7 +45,7 @@ for more information, see the paper:
 // ---- local program includes ----
 //#include "GeometricalMoments.h"
 #include "ScaledGeometricMoments.h"
-#include "ZernikeMoments.h"
+#include "ZernikeMoments.hpp"
 
 /**
  * This class serves as a wrapper around the geometrical and
