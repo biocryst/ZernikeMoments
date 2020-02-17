@@ -10,6 +10,7 @@
 #include <chrono>
 #include <type_traits>
 #include <cassert>
+#include <iterator>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>

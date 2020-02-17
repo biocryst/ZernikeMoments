@@ -51,7 +51,7 @@ using std::vector;
     \param VoxelT   type of the voxel values
     \param MomentT  type of the moments -- recommended to be double
  */
-template<class VoxelT, class MomentT>
+template<class InputVoxelIterator, class MomentT>
 class ScaledGeometricalMoments
 {
 public:
@@ -75,8 +75,8 @@ public:
 
     // ---- construction / init ----
     /// Contructor
-    ScaledGeometricalMoments (
-        const VoxelT* _voxels,  /**< input voxel grid */
+    ScaledGeometricalMoments(
+        InputVoxelIterator _voxels,  /**< input voxel grid */
         int _xDim,              /**< x-dimension of the input voxel grid */
         int _yDim,              /**< y-dimension of the input voxel grid */
         int _zDim,              /**< z-dimension of the input voxel grid */
@@ -85,14 +85,14 @@ public:
         double _zCOG,           /**< z-coord of the center of gravity */
         double _scale,          /**< scaling factor */
         int _maxOrder = 1       /**< maximal order to compute moments for */
-        );
+    );
 
     /// Default constructor
-    ScaledGeometricalMoments ();
+    ScaledGeometricalMoments();
 
     /// The init function used by the contructors
-    void Init (
-        const VoxelT* _voxels,  /**< input voxel grid */
+    void Init(
+        InputVoxelIterator _voxels,  /**< input voxel grid */
         int _xDim,              /**< x-dimension of the input voxel grid */
         int _yDim,              /**< y-dimension of the input voxel grid */
         int _zDim,              /**< z-dimension of the input voxel grid */
@@ -101,15 +101,14 @@ public:
         double _zCOG,           /**< z-coord of the center of gravity */
         double _scale,          /**< scaling factor */
         int _maxOrder = 1       /**< maximal order to compute moments for */
-        );
-
+    );
 
     /// Access function
-    T GetMoment (
+    T GetMoment(
         int _i,                 /**< order along x */
         int _j,                 /**< order along y */
         int _k                  /**< order along z */
-        );
+    );
 
 private:
     int xDim_,              // dimensions
@@ -122,15 +121,13 @@ private:
     T3D         moments_;   // array containing the cumulative moments
 
     // ---- private functions ----
-    void Compute ();
-    void ComputeSamples (double _xCOG, double _yCOG, double _zCOG, double _scale);
-    void ComputeDiffFunction (T1DIter _iter, T1DIter _diffIter, int _dim);
+    void Compute();
+    void ComputeSamples(double _xCOG, double _yCOG, double _zCOG, double _scale);
+    void ComputeDiffFunction(T1DIter _iter, T1DIter _diffIter, int _dim);
 
-    T Multiply (T1DIter _diffIter, T1DIter _sampleIter, int _dim);
-
+    T Multiply(T1DIter _diffIter, T1DIter _sampleIter, int _dim);
 };
 
 #include "ScaledGeometricalMoments.cpp"
 
 #endif
-

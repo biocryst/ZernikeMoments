@@ -69,14 +69,14 @@ ComplexCoeff<T>::ComplexCoeff() :
 }
 
 // ---------- implementation of ZernikeMoments class -------------
-template<class VoxelT, class MomentT>
-ZernikeMoments<VoxelT, MomentT>::ZernikeMoments(int _order, ScaledGeometricalMoments<VoxelT, MomentT>& _gm)
+template<class InputVoxelIterator, class MomentT>
+ZernikeMoments<InputVoxelIterator, MomentT>::ZernikeMoments(int _order, ScaledGeometricalMoments<InputVoxelIterator, MomentT>& _gm)
 {
     Init(_order, _gm);
 }
 
-template<class VoxelT, class MomentT>
-ZernikeMoments<VoxelT, MomentT>::ZernikeMoments() :
+template<class InputVoxelIterator, class MomentT>
+ZernikeMoments<InputVoxelIterator, MomentT>::ZernikeMoments() :
     order_(0)
 {
 }
@@ -84,8 +84,8 @@ ZernikeMoments<VoxelT, MomentT>::ZernikeMoments() :
 /**
  * Computes all coefficients that are input data independent
  */
-template<class VoxelT, class MomentT>
-void ZernikeMoments<VoxelT, MomentT>::Init(int _order, ScaledGeometricalMoments<VoxelT, MomentT>& _gm)
+template<class InputVoxelIterator, class MomentT>
+void ZernikeMoments<InputVoxelIterator, MomentT>::Init(int _order, ScaledGeometricalMoments<InputVoxelIterator, MomentT>& _gm)
 {
     /* Todo: Init() doesn't depend on the geomentrical moments.
      * Removing the  parameter and moving it to Compute() will make the class more efficient to reuse to
@@ -102,8 +102,8 @@ void ZernikeMoments<VoxelT, MomentT>::Init(int _order, ScaledGeometricalMoments<
 /**
  * Computes all the normalizing factors $c_l^m$ for harmonic polynomials e
  */
-template<class VoxelT, class MomentT>
-void ZernikeMoments<VoxelT, MomentT>::ComputeCs()
+template<class InputVoxelIterator, class MomentT>
+void ZernikeMoments<InputVoxelIterator, MomentT>::ComputeCs()
 {
     using namespace boost::math;
 
@@ -136,8 +136,8 @@ void ZernikeMoments<VoxelT, MomentT>::ComputeCs()
  * Computes all coefficients q for orthonormalization of radial polynomials
  * in Zernike polynomials.
  */
-template<class VoxelT, class MomentT>
-void ZernikeMoments<VoxelT, MomentT>::ComputeQs()
+template<class InputVoxelIterator, class MomentT>
+void ZernikeMoments<InputVoxelIterator, MomentT>::ComputeQs()
 {
     using namespace boost::math;
 
@@ -189,8 +189,8 @@ void ZernikeMoments<VoxelT, MomentT>::ComputeQs()
  * For each such combination the coefficients are stored with according
  * geom. moment order (see ComplexCoeff).
  */
-template<class VoxelT, class MomentT>
-void ZernikeMoments<VoxelT, MomentT>::ComputeGCoefficients()
+template<class InputVoxelIterator, class MomentT>
+void ZernikeMoments<InputVoxelIterator, MomentT>::ComputeGCoefficients()
 {
     using namespace boost::math;
 
@@ -283,13 +283,13 @@ void ZernikeMoments<VoxelT, MomentT>::ComputeGCoefficients()
  * Computes the Zernike moments. This computation is data dependent
  * and has to be performed for each new object and/or transformation.
  */
-template<class VoxelT, class MomentT>
-void ZernikeMoments<VoxelT, MomentT>::Compute()
+template<class InputVoxelIterator, class MomentT>
+void ZernikeMoments<InputVoxelIterator, MomentT>::Compute()
 {
     // geometrical moments have to be computed first
     if (!order_)
     {
-        throw std::runtime_error("ZernikeMoments<VoxelT,MomentT>::ComputeZernikeMoments (): attempting to \
+        throw std::runtime_error("ZernikeMoments<InputVoxelIterator,MomentT>::ComputeZernikeMoments (): attempting to \
                      compute Zernike moments without setting valid geometrical \
                      moments first.");
     }
@@ -350,8 +350,8 @@ void ZernikeMoments<VoxelT, MomentT>::Compute()
  * moments, is reconstructed. _grid is the output grid containing
  * the reconstructed function.
  */
-template<class VoxelT, class MomentT>
-void ZernikeMoments<VoxelT, MomentT>::Reconstruct(ComplexT3D& _grid, T _xCOG, T _yCOG, T _zCOG, T _scale, int _minN, int _maxN, int _minL, int _maxL)
+template<class InputVoxelIterator, class MomentT>
+void ZernikeMoments<InputVoxelIterator, MomentT>::Reconstruct(ComplexT3D& _grid, T _xCOG, T _yCOG, T _zCOG, T _scale, int _minN, int _maxN, int _minL, int _maxL)
 {
     int dimX = _grid.size();
     int dimY = _grid[0].size();
@@ -453,8 +453,8 @@ void ZernikeMoments<VoxelT, MomentT>::Reconstruct(ComplexT3D& _grid, T _xCOG, T 
     //NormalizeGridValues (_grid);
 }
 
-template<class VoxelT, class MomentT>
-void ZernikeMoments<VoxelT, MomentT>::NormalizeGridValues(ComplexT3D& _grid)
+template<class InputVoxelIterator, class MomentT>
+void ZernikeMoments<InputVoxelIterator, MomentT>::NormalizeGridValues(ComplexT3D& _grid)
 {
     int xD = _grid.size();
     int yD = _grid[0].size();
@@ -491,8 +491,8 @@ void ZernikeMoments<VoxelT, MomentT>::NormalizeGridValues(ComplexT3D& _grid)
     }
 }
 
-template<class VoxelT, class MomentT>
-void ZernikeMoments<VoxelT, MomentT>::PrintGrid(ComplexT3D& _grid)
+template<class InputVoxelIterator, class MomentT>
+void ZernikeMoments<InputVoxelIterator, MomentT>::PrintGrid(ComplexT3D& _grid)
 {
     int xD = _grid.size();
     int yD = _grid[0].size();
@@ -533,8 +533,8 @@ void ZernikeMoments<VoxelT, MomentT>::PrintGrid(ComplexT3D& _grid)
     std::cout.setf(std::ios_base::fmtflags(0), std::ios_base::floatfield);
 }
 
-template<class VoxelT, class MomentT>
-void ZernikeMoments<VoxelT, MomentT>::CheckOrthonormality(int _n1, int _l1, int _m1, int _n2, int _l2, int _m2)
+template<class InputVoxelIterator, class MomentT>
+void ZernikeMoments<InputVoxelIterator, MomentT>::CheckOrthonormality(int _n1, int _l1, int _m1, int _n2, int _l2, int _m2)
 {
     int li1 = _l1 / 2;
     int li2 = _l2 / 2;
@@ -574,8 +574,8 @@ void ZernikeMoments<VoxelT, MomentT>::CheckOrthonormality(int _n1, int _l1, int 
  * Evaluates the integral of a monomial x^p*y^q*z^r within the unit sphere
  * Attention : a very stupid implementation, thus it's accordingly very slow
  */
-template<class VoxelT, class MomentT>
-MomentT ZernikeMoments<VoxelT, MomentT>::EvalMonomialIntegral(int _p, int _q, int _r, int _dim)
+template<class InputVoxelIterator, class MomentT>
+MomentT ZernikeMoments<InputVoxelIterator, MomentT>::EvalMonomialIntegral(int _p, int _q, int _r, int _dim)
 {
     T radius = static_cast<T>(_dim - 1) / static_cast <T>(2);
     T scale = std::pow(static_cast <T>(1) / radius, 3);

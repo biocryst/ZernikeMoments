@@ -53,7 +53,7 @@ for more information, see the paper:
  * Zernike moments. It provides also the implementation of invariant Zernike
  * descriptors, means of reconstruction of orig. function, etc.
  */
-template<class T>
+template<class T, class InputVoxelIterator>
 class ZernikeDescriptor
 {
 public:
@@ -66,18 +66,18 @@ public:
     typedef vector<T>                               T1D;
     typedef vector<T1D>                             T2D;            // 2D array of T type
 
+    using VoxelType = typename std::iterator_traits<InputVoxelIterator>::value_type;
+
     //typedef CumulativeMoments<T, T>                 CumulativeMomentsT;
-    typedef ScaledGeometricalMoments<T, T>          ScaledGeometricalMomentsT;
-    typedef ZernikeMoments<T, T>                    ZernikeMomentsT;
+    typedef ScaledGeometricalMoments<InputVoxelIterator, T>          ScaledGeometricalMomentsT;
+    typedef ZernikeMoments<InputVoxelIterator, T>                    ZernikeMomentsT;
 
     // ---- public functions ----
     ZernikeDescriptor(
-        T* _voxels,                 /**< the cubic voxel grid */
+        InputVoxelIterator _voxels, /**< the cubic voxel grid */
         int _dim,                   /**< dimension is $_dim^3$ */
         int _order                  /**< maximal order of the Zernike moments (N in paper) */
     );
-
-    ZernikeDescriptor();
 
     /**
         Reconstructs the original object from the 3D Zernike moments.
@@ -101,23 +101,23 @@ public:
 
 private:
     // ---- private helper functions ----
-    void NormalizeGrid();
-    void ComputeNormalization();
-    void ComputeMoments();
+    void NormalizeGrid(InputVoxelIterator);
+    void ComputeNormalization(InputVoxelIterator);
+    void ComputeMoments(InputVoxelIterator);
     void ComputeInvariants();
     void WriteGrid(
         ComplexT3D& _grid,
         const char* _fName);
 
     double ComputeScale_BoundingSphere(
-        T* _voxels,
+        InputVoxelIterator _voxels,
         int _dim,
         T _xCOG,
         T _yCOG,
         T _zCOG
     );
     double ComputeScale_RadiusVar(
-        T* _voxels,
+        InputVoxelIterator _voxels,
         int _dim,
         T _xCOG,
         T _yCOG,
@@ -133,7 +133,7 @@ private:
     int     order_;                 // maximal order of the moments to be computed (max{n})
     int     dim_;                   // length of the edge of the voxel grid (which is a cube)
 
-    T* voxels_;                // 1D array containing the voxels
+    //T* voxels_;                // 1D array containing the voxels
     T       zeroMoment_,            // zero order moment
         xCOG_, yCOG_, zCOG_,    // center of gravity
         scale_;                 // scaling factor mapping the function into the unit sphere

@@ -47,8 +47,6 @@ for more information, see the paper:
 
 // ----- std includes -----
 #include <complex>
-#include <set>
-#include <ios>
 
 /**
  * Struct representing a complex coefficient of a moment
@@ -70,7 +68,7 @@ struct ComplexCoeff
 /**
  * Class representing the Zernike moments
  */
-template<class VoxelT, class MomentT>
+template<class InputVoxelIterator, class MomentT>
 class ZernikeMoments
 {
 public:
@@ -89,14 +87,14 @@ public:
 
 public:
     // ---- public member functions ----
-    ZernikeMoments(int _order, ScaledGeometricalMoments<VoxelT, MomentT>& _gm);
+    ZernikeMoments(int _order, ScaledGeometricalMoments<InputVoxelIterator, MomentT>& _gm);
     ZernikeMoments();
 
     /* Todo: Init() doesn't depend on the geomentrical moments.
      * Removing the  parameter and moving it to Compute() will make the class more efficient to reuse to
      * compute ZM for several objects at once.
      */
-    void Init(int _order, ScaledGeometricalMoments<VoxelT, MomentT>& _gm);
+    void Init(int _order, ScaledGeometricalMoments<InputVoxelIterator, MomentT>& _gm);
     void Compute();
 
     ComplexT GetMoment(int _n, int _l, int _m);
@@ -127,7 +125,7 @@ private:
     T3D                 qs_;                // q coefficients (radial polynomial normalization)
     T2D                 cs_;                // c coefficients (harmonic polynomial normalization)
 
-    ScaledGeometricalMoments<VoxelT, MomentT> gm_;
+    ScaledGeometricalMoments<InputVoxelIterator, MomentT> gm_;
     int                 order_;             // := max{n} according to indexing of Zernike polynomials
 
     // ---- debug functions/arguments ----

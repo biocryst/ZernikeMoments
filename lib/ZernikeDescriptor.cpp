@@ -40,21 +40,21 @@ for more information, see the paper:
 #include <fstream>
 #include "ZernikeDescriptor.h"
 
-template<class T>
-ZernikeDescriptor<T>::ZernikeDescriptor(T* _voxels, int _dim, int _order) :
-    voxels_(_voxels), dim_(_dim), order_(_order)
+template<class T, class InputVoxelIterator>
+ZernikeDescriptor<T, InputVoxelIterator>::ZernikeDescriptor(InputVoxelIterator voxels, int _dim, int _order) :
+    dim_(_dim), order_(_order)
 {
-    ComputeNormalization();
-    NormalizeGrid();
+    ComputeNormalization(voxels);
+    NormalizeGrid(voxels);
 
-    ComputeMoments();
+    ComputeMoments(voxels);
     ComputeInvariants();
 }
 
-template<class T>
-void ZernikeDescriptor<T>::ComputeMoments()
+template<class T, class InputVoxelIterator>
+void ZernikeDescriptor<T, InputVoxelIterator>::ComputeMoments(InputVoxelIterator voxels)
 {
-    gm_.Init(voxels_, dim_, dim_, dim_, xCOG_, yCOG_, zCOG_, scale_, order_);
+    gm_.Init(voxels, dim_, dim_, dim_, xCOG_, yCOG_, zCOG_, scale_, order_);
 
     // Zernike moments
     zm_.Init(order_, gm_);
@@ -66,8 +66,8 @@ void ZernikeDescriptor<T>::ComputeMoments()
  * the precomputed center of gravity and scaling factor. All the voxels remaining
  * outside the unit ball are set to zero.
  */
-template<class T>
-void ZernikeDescriptor<T>::NormalizeGrid()
+template<class T, class InputVoxelIterator>
+void ZernikeDescriptor<T, InputVoxelIterator>::NormalizeGrid(InputVoxelIterator voxels)
 {
     T point[3];
 
@@ -75,13 +75,15 @@ void ZernikeDescriptor<T>::NormalizeGrid()
     T radius = (T)1 / scale_;
     T sqrRadius = radius * radius;
 
-    for (int x = 0; x < dim_; ++x)
+    for (size_t x = 0; x < dim_; ++x)
     {
-        for (int y = 0; y < dim_; ++y)
+        for (size_t y = 0; y < dim_; ++y)
         {
-            for (int z = 0; z < dim_; ++z)
+            for (size_t z = 0; z < dim_; ++z)
             {
-                if (voxels_[(z * dim_ + y) * dim_ + x] != (T)0)
+                size_t index{ (z * dim_ + y) * dim_ + x };
+
+                if (voxels[index] != (T)0)
                 {
                     point[0] = (T)x - xCOG_;
                     point[1] = (T)y - yCOG_;
@@ -90,7 +92,7 @@ void ZernikeDescriptor<T>::NormalizeGrid()
                     T sqrLen = point[0] * point[0] + point[1] * point[1] + point[2] * point[2];
                     if (sqrLen > sqrRadius)
                     {
-                        voxels_[(z * dim_ + y) * dim_ + x] = 0.0;
+                        voxels[index] = 0.0;
                     }
                 }
             }
@@ -102,10 +104,10 @@ void ZernikeDescriptor<T>::NormalizeGrid()
  * Center of gravity and a scaling factor is computed according to the geometrical
  * moments and a bounding sphere around the cog.
  */
-template<class T>
-void ZernikeDescriptor<T>::ComputeNormalization()
+template<class T, class InputVoxelIterator>
+void ZernikeDescriptor<T, InputVoxelIterator>::ComputeNormalization(InputVoxelIterator voxels)
 {
-    ScaledGeometricalMoments<T, T> gm(voxels_, dim_, dim_, dim_, 0.0, 0.0, 0.0, 1.0);
+    ScaledGeometricalMoments<InputVoxelIterator, T> gm(voxels, dim_, dim_, dim_, 0.0, 0.0, 0.0, 1.0);
 
     // compute the geometrical transform for no translation and scaling, first
     // to get the 0'th and 1'st order properties of the function
@@ -121,7 +123,7 @@ void ZernikeDescriptor<T>::ComputeNormalization()
     // scaling, so that the function gets mapped into the unit sphere
 
     //T recScale = ComputeScale_BoundingSphere (voxels_, dim_, xCOG_, yCOG_, zCOG_);
-    T recScale = 2.0 * ComputeScale_RadiusVar(voxels_, dim_, xCOG_, yCOG_, zCOG_);
+    T recScale = 2.0 * ComputeScale_RadiusVar(voxels, dim_, xCOG_, yCOG_, zCOG_);
     if (recScale == 0.0)
     {
         std::cerr << "\nNo voxels in grid!\n";
@@ -134,8 +136,8 @@ void ZernikeDescriptor<T>::ComputeNormalization()
  * Computes the bigest distance from the given COG to any voxel with value bigger than 0.9
  * I.e. I think a binary volume is implicitly assumed here.
  */
-template<class T>
-double ZernikeDescriptor<T>::ComputeScale_BoundingSphere(T* _voxels, int _dim, T _xCOG, T _yCOG, T _zCOG)
+template<class T, class InputVoxelIterator>
+double ZernikeDescriptor<T, InputVoxelIterator>::ComputeScale_BoundingSphere(InputVoxelIterator voxels, int _dim, T _xCOG, T _yCOG, T _zCOG)
 {
     T max = (T)0;
 
@@ -148,7 +150,9 @@ double ZernikeDescriptor<T>::ComputeScale_BoundingSphere(T* _voxels, int _dim, T
         {
             for (int z = 0; z < d; ++z)
             {
-                if (_voxels[(z + d * y) * d + x] > 0.9)
+                size_t index{ (z + d * y) * d + x };
+
+                if (voxels[index] > 0.9)
                 {
                     T mx = (T)x - _xCOG;
                     T my = (T)y - _yCOG;
@@ -171,8 +175,8 @@ double ZernikeDescriptor<T>::ComputeScale_BoundingSphere(T* _voxels, int _dim, T
  * Computes the average distance from the given COG to all voxels with value bigger than 0.9
  * I.e. I think a binary volume is implicitly assumed here.
  */
-template<class T>
-double ZernikeDescriptor<T>::ComputeScale_RadiusVar(T* _voxels, int _dim, T _xCOG, T _yCOG, T _zCOG)
+template<class T, class InputVoxelIterator>
+double ZernikeDescriptor<T, InputVoxelIterator>::ComputeScale_RadiusVar(InputVoxelIterator _voxels, int _dim, T _xCOG, T _yCOG, T _zCOG)
 {
     // the edge length of the voxel grid in voxel units
     int d = _dim;
@@ -207,8 +211,8 @@ double ZernikeDescriptor<T>::ComputeScale_RadiusVar(T* _voxels, int _dim, T _xCO
     return retval;
 }
 
-template<class T>
-void ZernikeDescriptor<T>::Reconstruct(ComplexT3D& _grid, int _minN, int _maxN, int _minL, int _maxL)
+template<class T, class InputVoxelIterator>
+void ZernikeDescriptor<T, InputVoxelIterator>::Reconstruct(ComplexT3D& _grid, int _minN, int _maxN, int _minL, int _maxL)
 {
     // the scaling between the reconstruction and original grid
     T fac = (T)(_grid.size()) / (T)dim_;
@@ -226,8 +230,8 @@ void ZernikeDescriptor<T>::Reconstruct(ComplexT3D& _grid, int _minN, int _maxN, 
  * Computes the Zernike moment based invariants, i.e. the norms of vectors with
  * components of Z_nl^m with m being the running index.
  */
-template<class T>
-void ZernikeDescriptor<T>::ComputeInvariants()
+template<class T, class InputVoxelIterator>
+void ZernikeDescriptor<T, InputVoxelIterator>::ComputeInvariants()
 {
     //invariants_.resize (order_ + 1);
     invariants_.clear();
@@ -252,8 +256,8 @@ void ZernikeDescriptor<T>::ComputeInvariants()
     }
 }
 
-template<class T>
-bool ZernikeDescriptor<T>::SaveInvariants(const std::string& path_to_file)
+template<class T, class InputVoxelIterator>
+bool ZernikeDescriptor<T, InputVoxelIterator>::SaveInvariants(const std::string& path_to_file)
 {
     std::ofstream outfile(path_to_file, std::ios_base::out);
 

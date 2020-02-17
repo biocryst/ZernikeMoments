@@ -57,7 +57,10 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
     using namespace std;
     using namespace boost::filesystem;
 
-    vector<double> voxels;
+    using VoxelType = bool;
+    using Container = vector<VoxelType>;
+
+    Container voxels;
     size_t dim{};
 
     path path_to_voxel;
@@ -87,7 +90,7 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
             new_path.replace_extension(".inv");
 
             // compute the zernike descriptors
-            ZernikeDescriptor<double> zd(voxels.data(), dim, max_order);
+            ZernikeDescriptor<double, Container::iterator> zd(voxels.begin(), dim, max_order);
 
             if (!zd.SaveInvariants(new_path.string()))
             {
