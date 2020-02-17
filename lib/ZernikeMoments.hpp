@@ -40,7 +40,7 @@ for more information, see the paper:
 #pragma once
 
 // ----- local program includes -----
-#include "ScaledGeometricMoments.h"
+#include "ScaledGeometricMoments.hpp"
 
 // ----- std includes -----
 #include <complex>

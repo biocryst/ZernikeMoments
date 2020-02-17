@@ -44,7 +44,7 @@ for more information, see the paper:
 
 // ---- local program includes ----
 //#include "GeometricalMoments.h"
-#include "ScaledGeometricMoments.h"
+#include "ScaledGeometricMoments.hpp"
 #include "ZernikeMoments.hpp"
 
 /**
