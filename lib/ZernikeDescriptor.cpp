@@ -124,6 +124,7 @@ void ZernikeDescriptor<T, InputVoxelIterator>::ComputeNormalization(InputVoxelIt
 
     //T recScale = ComputeScale_BoundingSphere (voxels_, dim_, xCOG_, yCOG_, zCOG_);
     T recScale = 2.0 * ComputeScale_RadiusVar(voxels, dim_, xCOG_, yCOG_, zCOG_);
+
     if (recScale == 0.0)
     {
         std::cerr << "\nNo voxels in grid!\n";

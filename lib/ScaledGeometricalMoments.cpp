@@ -70,12 +70,12 @@ void ScaledGeometricalMoments<InputVoxelIterator, MomentT>::Init(
 
     maxOrder_ = _maxOrder;
 
-    size_t totalSize = xDim_ * yDim_ * zDim_;
-    voxels_.resize(totalSize);
-    for (int i = 0; i < totalSize; ++i)
-    {
-        voxels_[i] = _voxels[i];
-    }
+    //size_t totalSize = xDim_ * yDim_ * zDim_;
+    //voxels_.resize(totalSize);
+    //for (int i = 0; i < totalSize; ++i)
+    //{
+    //    voxels_[i] = _voxels[i];
+    //}
 
     moments_.resize(maxOrder_ + 1);
     for (int i = 0; i <= maxOrder_; ++i)
@@ -89,7 +89,7 @@ void ScaledGeometricalMoments<InputVoxelIterator, MomentT>::Init(
 
     ComputeSamples(_xCOG, _yCOG, _zCOG, _scale);
 
-    Compute();
+    Compute(_voxels);
 }
 
 template<class InputVoxelIterator, class MomentT>
@@ -118,7 +118,7 @@ void ScaledGeometricalMoments<InputVoxelIterator, MomentT>::ComputeSamples(doubl
 }
 
 template<class InputVoxelIterator, class MomentT>
-void ScaledGeometricalMoments<InputVoxelIterator, MomentT>::Compute()
+void ScaledGeometricalMoments<InputVoxelIterator, MomentT>::Compute(InputVoxelIterator voxels)
 {
     int arrayDim = zDim_;
     int layerDim = yDim_ * zDim_;
@@ -135,8 +135,9 @@ void ScaledGeometricalMoments<InputVoxelIterator, MomentT>::Compute()
     T1D array(arrayDim);
     T   moment;
 
-    typename T1D::iterator iter = voxels_.begin();
     typename T1D::iterator diffIter = diffGrid.begin();
+
+    InputVoxelIterator iter{ voxels };
 
     // generate the diff version of the voxel grid in x direction
     for (int x = 0; x < layerDim; ++x)
@@ -159,13 +160,13 @@ void ScaledGeometricalMoments<InputVoxelIterator, MomentT>::Compute()
             diffIter += xDim_ + 1;
         }
 
-        iter = layer.begin();
+        auto layer_iter = layer.begin();
         diffIter = diffLayer.begin();
         for (int y = 0; y < arrayDim; ++y)
         {
-            ComputeDiffFunction(iter, diffIter, yDim_);
+            ComputeDiffFunction(layer_iter, diffIter, yDim_);
 
-            iter += yDim_;
+            layer_iter += yDim_;
             diffIter += yDim_ + 1;
         }
 
@@ -180,9 +181,9 @@ void ScaledGeometricalMoments<InputVoxelIterator, MomentT>::Compute()
                 diffIter += yDim_ + 1;
             }
 
-            iter = array.begin();
+            auto mom_iter = array.begin();
             diffIter = diffArray.begin();
-            ComputeDiffFunction(iter, diffIter, zDim_);
+            ComputeDiffFunction(mom_iter, diffIter, zDim_);
 
             for (int k = 0; k < maxOrder_ + 1 - i - j; ++k)
             {
@@ -193,6 +194,17 @@ void ScaledGeometricalMoments<InputVoxelIterator, MomentT>::Compute()
             }
         }
     }
+}
+
+template<class InputVoxelIterator, class MomentT>
+void ScaledGeometricalMoments<InputVoxelIterator, MomentT>::ComputeDiffFunction(InputVoxelIterator _iter, T1DIter _diffIter, int _dim)
+{
+    _diffIter[0] = -_iter[0];
+    for (int i = 1; i < _dim; ++i)
+    {
+        _diffIter[i] = _iter[i - 1] - _iter[i];
+    }
+    _diffIter[_dim] = _iter[_dim - 1];
 }
 
 template<class InputVoxelIterator, class MomentT>

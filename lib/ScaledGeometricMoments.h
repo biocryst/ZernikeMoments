@@ -69,7 +69,7 @@ public:
     /// vector scalar type
     typedef vector<Double1D>    Double2D;
 
-    typedef typename T1D::iterator       T1DIter;
+    typedef typename T1D::iterator T1DIter;
 
     // ----- public methods -----
 
@@ -117,12 +117,14 @@ private:
         maxOrder_;          // maximal order of the moments
 
     T2D         samples_;   // samples of the scaled and translated grid in x, y, z
-    T1D         voxels_;    // array containing the voxel grid
+    //T1D         voxels_;    // array containing the voxel grid
     T3D         moments_;   // array containing the cumulative moments
 
     // ---- private functions ----
-    void Compute();
+    void Compute(InputVoxelIterator voxels);
+
     void ComputeSamples(double _xCOG, double _yCOG, double _zCOG, double _scale);
+    void ComputeDiffFunction(InputVoxelIterator _iter, T1DIter _diffIter, int _dim);
     void ComputeDiffFunction(T1DIter _iter, T1DIter _diffIter, int _dim);
 
     T Multiply(T1DIter _diffIter, T1DIter _sampleIter, int _dim);
