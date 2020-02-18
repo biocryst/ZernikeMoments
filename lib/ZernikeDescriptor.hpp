@@ -80,7 +80,6 @@ public:
     {
         ComputeNormalization(voxels);
         NormalizeGrid(voxels);
-
         ComputeMoments(voxels);
         ComputeInvariants();
     }
@@ -146,9 +145,6 @@ public:
         return true;
     }
 
-    /// Access to invariants
-    T2D GetInvariants();
-
 private:
     // ---- private helper functions ----
     /**
@@ -161,7 +157,7 @@ private:
         T point[3];
 
         // it is easier to work with squared radius -> no sqrt required
-        T radius = (T)1 / scale_;
+        T radius = static_cast<T>(1) / scale_;
         T sqrRadius = radius * radius;
 
         for (size_t x = 0; x < dim_; ++x)
@@ -172,16 +168,17 @@ private:
                 {
                     size_t index{ (z * dim_ + y) * dim_ + x };
 
-                    if (voxels[index] != (T)0)
+                    if (voxels[index] != static_cast<VoxelType>(0))
                     {
-                        point[0] = (T)x - xCOG_;
-                        point[1] = (T)y - yCOG_;
-                        point[2] = (T)z - zCOG_;
+                        point[0] = static_cast<T>(x) - xCOG_;
+                        point[1] = static_cast<T>(y) - yCOG_;
+                        point[2] = static_cast<T>(z) - zCOG_;
 
                         T sqrLen = point[0] * point[0] + point[1] * point[1] + point[2] * point[2];
+
                         if (sqrLen > sqrRadius)
                         {
-                            voxels[index] = 0.0;
+                            voxels[index] = static_cast<VoxelType>(0.0);
                         }
                     }
                 }
@@ -215,10 +212,9 @@ private:
 
         if (recScale == 0.0)
         {
-            std::cerr << "\nNo voxels in grid!\n";
-            exit(-1);
+            throw std::runtime_error("No voxels in grid!");
         }
-        scale_ = (T)1 / recScale;
+        scale_ = static_cast<T>(1) / recScale;
     }
 
     void ComputeMoments(InputVoxelIterator voxels)
@@ -242,7 +238,7 @@ private:
         {
             //invariants_[n].resize (n/2 + 1);
 
-            T sum = (T)0;
+            T sum{ 0 };
             int l0 = n % 2, li = 0;
 
             for (int l = n % 2; l <= n; ++li, l += 2)
@@ -258,9 +254,6 @@ private:
             }
         }
     }
-    void WriteGrid(
-        ComplexT3D& _grid,
-        const char* _fName);
 
     /**
  * Computes the bigest distance from the given COG to any voxel with value bigger than 0.9
@@ -274,24 +267,24 @@ private:
         T _zCOG
     )
     {
-        T max = (T)0;
+        T max{ 0 };
 
         // the edge length of the voxel grid in voxel units
         int d = _dim;
 
-        for (int x = 0; x < d; ++x)
+        for (size_t x = 0; x < d; ++x)
         {
-            for (int y = 0; y < d; ++y)
+            for (size_t y = 0; y < d; ++y)
             {
-                for (int z = 0; z < d; ++z)
+                for (size_t z = 0; z < d; ++z)
                 {
                     size_t index{ (z + d * y) * d + x };
 
-                    if (voxels[index] > 0.9)
+                    if (static_cast<double>(voxels[index]) > 0.9)
                     {
-                        T mx = (T)x - _xCOG;
-                        T my = (T)y - _yCOG;
-                        T mz = (T)z - _zCOG;
+                        T mx = static_cast<T>(x) - _xCOG;
+                        T my = static_cast<T>(y) - _yCOG;
+                        T mz = static_cast<T>(z) - _zCOG;
                         T temp = mx * mx + my * my + mz * mz;
 
                         if (temp > max)
@@ -321,21 +314,21 @@ private:
         // the edge length of the voxel grid in voxel units
         int d = _dim;
 
-        int nVoxels = 0;
+        int nVoxels{ 0 };
 
-        T sum = 0.0;
+        T sum{ 0.0 };
 
-        for (int x = 0; x < d; ++x)
+        for (size_t x = 0; x < d; ++x)
         {
-            for (int y = 0; y < d; ++y)
+            for (size_t y = 0; y < d; ++y)
             {
-                for (int z = 0; z < d; ++z)
+                for (size_t z = 0; z < d; ++z)
                 {
-                    if (_voxels[(z + d * y) * d + x] > 0.9)
+                    if (static_cast<double>(_voxels[(z + d * y) * d + x]) > 0.9)
                     {
-                        T mx = (T)x - _xCOG;
-                        T my = (T)y - _yCOG;
-                        T mz = (T)z - _zCOG;
+                        T mx = static_cast<T>(x) - _xCOG;
+                        T my = static_cast<T>(y) - _yCOG;
+                        T mz = static_cast<T>(z) - _zCOG;
                         T temp = mx * mx + my * my + mz * mz;
 
                         sum += temp;
@@ -351,16 +344,11 @@ private:
         return retval;
     }
 
-    T* ReadGrid(
-        const char* _fname,
-        int& _dim_);
-
 private:
     // ---- member variables ----
     size_t     order_;                 // maximal order of the moments to be computed (max{n})
     size_t     dim_;                   // length of the edge of the voxel grid (which is a cube)
 
-    //T* voxels_;                // 1D array containing the voxels
     T       zeroMoment_,            // zero order moment
         xCOG_, yCOG_, zCOG_,    // center of gravity
         scale_;                 // scaling factor mapping the function into the unit sphere

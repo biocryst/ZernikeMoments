@@ -42,9 +42,6 @@ for more information, see the paper:
 // ----- local program includes -----
 #include "ScaledGeometricMoments.hpp"
 
-// ----- std includes -----
-#include <complex>
-
 /**
  * Struct representing a complex coefficient of a moment
  * of order (p_,q_,r_)

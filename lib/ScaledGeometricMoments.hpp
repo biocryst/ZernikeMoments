@@ -111,17 +111,12 @@ public:
 
         maxOrder_ = _maxOrder;
 
-        //size_t totalSize = xDim_ * yDim_ * zDim_;
-        //voxels_.resize(totalSize);
-        //for (int i = 0; i < totalSize; ++i)
-        //{
-        //    voxels_[i] = _voxels[i];
-        //}
-
         moments_.resize(maxOrder_ + 1);
+
         for (int i = 0; i <= maxOrder_; ++i)
         {
             moments_[i].resize(maxOrder_ - i + 1);
+
             for (int j = 0; j <= maxOrder_ - i; ++j)
             {
                 moments_[i][j].resize(maxOrder_ - i - j + 1);
@@ -150,7 +145,6 @@ private:
         maxOrder_;          // maximal order of the moments
 
     T2D         samples_;   // samples of the scaled and translated grid in x, y, z
-    //T1D         voxels_;    // array containing the voxel grid
     T3D         moments_;   // array containing the cumulative moments
 
     // ---- private functions ----
@@ -255,6 +249,7 @@ private:
             }
         }
     }
+
     void ComputeDiffFunction(InputVoxelIterator _iter, T1DIter _diffIter, int _dim)
     {
         _diffIter[0] = -_iter[0];

@@ -90,6 +90,7 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
             new_path.replace_extension(".inv");
 
             // compute the zernike descriptors
+            // This invoke changes voxels data
             ZernikeDescriptor<double, Container::iterator> zd(voxels.begin(), dim, max_order);
 
             if (!zd.SaveInvariants(new_path.string()))
