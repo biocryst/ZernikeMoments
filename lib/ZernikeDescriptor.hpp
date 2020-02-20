@@ -145,6 +145,11 @@ public:
         return true;
     }
 
+    T1D get_invariants() const
+    {
+        return invariants_;
+    }
+
 private:
     // ---- private helper functions ----
     /**
