@@ -52,8 +52,6 @@ void parallel::recursive_compute(const boost::filesystem::path& input_dir, int m
         thread.join();
     }
 
-    BOOST_LOG_SEV(logger, logging::severity_t::debug) << "Parse: " << xml_paths.size() << std::endl;
-
     io::xml::XMLMerger  merger{ (xml_dir / "result.xml").string(), u8"Voxel" };
     merger.merge_files(xml_paths);
 }
@@ -84,8 +82,6 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
     xml_output += ".xml";
 
     xml_output = xml_dir / xml_output;
-
-    BOOST_LOG_SEV(logger, logging::severity_t::info) << xml_output << std::endl;
 
     io::xml::XMLWriter<DescriptorType> writer(xml_output.string());
 

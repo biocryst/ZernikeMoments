@@ -84,8 +84,6 @@ bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path)
 
                     if (content != nullptr)
                     {
-                        BOOST_LOG_SEV(logger, severity_t::debug) << "Read " << (const char*)name << std::endl;
-
                         xmlTextWriterWriteRaw(writer, content);
                     }
 

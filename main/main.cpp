@@ -273,10 +273,10 @@ int main(int argc, char** argv)
     int thread_count{ args[thread_arg_name].as<int>() };
     path xml_dir{ args[xml_arg_name].as<string>() };
 
+    logging::logger_t& logger = logging::logger_main::get();
+
     if (!exists(xml_dir))
     {
-        logging::logger_t& logger = logging::logger_main::get();
-
         BOOST_LOG_SEV(logger, logging::severity_t::info) << "Create directory: " << xml_dir << std::endl;
 
         if (!create_directories(xml_dir))
@@ -286,6 +286,15 @@ int main(int argc, char** argv)
             clear();
 
             return 1;
+        }
+    }
+
+    for (auto& path : directory_iterator(xml_dir))
+    {
+        if (path.path().extension() == ".xml")
+        {
+            BOOST_LOG_SEV(logger, logging::severity_t::info) << "Delete " << path << std::endl;
+            remove(path);
         }
     }
 
