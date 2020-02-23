@@ -1,6 +1,9 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #pragma once
 
 #include "stdafx.h"
+#include "loggers.h"
 
 namespace io
 {
@@ -13,25 +16,27 @@ namespace io
 
             XMLWriter(const boost::filesystem::path& path_to_xml)
             {
+                logger = &logging::logger_io::get();
+
                 writer = xmlNewTextWriterFilename(path_to_xml.string().c_str(), 0);
 
                 if (writer == nullptr)
                 {
-                    throw std::runtime_error("Error creating the xml writer");
+                    throw std::runtime_error(u8"Error creating the xml writer");
                 }
 
-                rc = xmlTextWriterStartDocument(writer, nullptr, "UTF-8", nullptr);
+                rc = xmlTextWriterStartDocument(writer, nullptr, u8"UTF-8", nullptr);
 
                 if (rc < 0)
                 {
-                    throw std::runtime_error("Error creating the xml writer");
+                    throw std::runtime_error(u8"Error when trying to write start of document");
                 }
 
                 rc = xmlTextWriterStartElement(writer, BAD_CAST u8"Voxels");
 
                 if (rc < 0)
                 {
-                    throw std::runtime_error("Error creating the xml writer");
+                    throw std::runtime_error(u8"Error when trying to write start of element");
                 }
             }
 
@@ -39,13 +44,20 @@ namespace io
 
             ~XMLWriter()
             {
-                xmlTextWriterEndDocument(writer);
+                rc = xmlTextWriterEndDocument(writer);
+
+                if (rc < 0)
+                {
+                    BOOST_LOG_SEV(*logger, logging::severity_t::error) << "Cannot write end of document" << std::endl;
+                }
+
                 xmlFreeTextWriter(writer);
+                logger = nullptr;
             }
 
             bool write_descriptor(const boost::filesystem::path& path_to_voxel, size_t voxel_res, const std::vector<DescriptorType>& desc)
             {
-                static_assert(std::is_floating_point<DescriptorType>::value, "Expected floating point type: float, double or long double");
+                static_assert(std::is_floating_point<DescriptorType>::value, u8"Expected floating point type: float, double or long double");
 
                 rc = xmlTextWriterStartElement(writer, BAD_CAST u8"Voxel");
 
@@ -129,7 +141,9 @@ namespace io
                 return "%g";
             }
 
-            int rc = 0;
+            int rc{};
+
+            logging::logger_t* logger = nullptr;
 
             xmlTextWriterPtr writer = nullptr;
         };

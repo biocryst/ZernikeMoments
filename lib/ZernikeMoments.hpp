@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 /*
 
                           3D Zernike Moments
@@ -267,7 +269,7 @@ public:
                     }
 
                     // function value at point
-                    ComplexT fVal = (0, 0);
+                    ComplexT fVal{ 0, 0 };
 
                     for (int n = _minN; n <= _maxN; ++n)
                         //for (int n=14; n<=14; ++n)

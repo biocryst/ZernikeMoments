@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 /*
 
                           3D Zernike Moments
@@ -51,29 +53,31 @@ for more information, see the paper:
 
 using namespace boost::program_options;
 using namespace boost::filesystem;
-using namespace std;
-\
 
-constexpr char* order_arg_name{ "max-order" };
-constexpr char* order_arg_short_name{ "n" };
-constexpr char* dir_arg_name{ "dir" };
-constexpr char* dir_arg_short_name{ "d" };
-constexpr char* thread_arg_name{ "threads" };
-constexpr char* thread_arg_short_name{ "t" };
-constexpr char* queue_arg_name{ "queue-size" };
-constexpr char* queue_arg_short_name{ "s" };
-constexpr char* log_sett_arg_name{ "logconf" };
-constexpr char* log_sett_short_arh_name{ "l" };
-constexpr char* xml_arg_name{ "output-dir" };
-constexpr char* xml_short_arg_name{ "o" };
+constexpr char* order_arg_name{ u8"max-order" };
+constexpr char* order_arg_short_name{ u8"n" };
+constexpr char* dir_arg_name{ u8"dir" };
+constexpr char* dir_arg_short_name{ u8"d" };
+constexpr char* thread_arg_name{ u8"threads" };
+constexpr char* thread_arg_short_name{ u8"t" };
+constexpr char* queue_arg_name{ u8"queue-size" };
+constexpr char* queue_arg_short_name{ u8"s" };
+constexpr char* log_sett_arg_name{ u8"logconf" };
+constexpr char* log_sett_short_arh_name{ u8"l" };
+constexpr char* xml_dir_arg_name{ u8"output-dir" };
+constexpr char* xml_short_arg_name{ u8"o" };
 
 bool init_logg_settings_from_file(const path& path_to_config)
 {
-    std::ifstream settings(path_to_config.string());
+    using std::ifstream;
+    using std::cerr;
+    using std::endl;
+
+    ifstream settings(path_to_config.string());
 
     if (!settings.is_open())
     {
-        std::cerr << "Could not open " << path_to_config << std::endl;
+        cerr << u8"Could not open " << path_to_config << endl;
         return false;
     }
 
@@ -84,22 +88,23 @@ bool init_logg_settings_from_file(const path& path_to_config)
     }
     catch (std::exception & exc)
     {
-        std::cerr << exc.what() << std::endl;
+        cerr << exc.what() << endl;
         settings.close();
         return false;
     }
 
     settings.close();
 
-    // Add some attributes
-    boost::log::core::get()->add_global_attribute("TimeStamp", boost::log::attributes::local_clock());
-    boost::log::core::get()->add_global_attribute("ThreadID", boost::log::attributes::current_thread_id());
+    boost::log::core::get()->add_global_attribute(u8"TimeStamp", boost::log::attributes::local_clock());
+    boost::log::core::get()->add_global_attribute(u8"ThreadID", boost::log::attributes::current_thread_id());
 
     return true;
 }
 
-auto parse_cli_args(int argc, char** argv)
+std::tuple<variables_map, options_description> parse_cli_args(int argc, char** argv)
 {
+    using std::string;
+
     string dir{ dir_arg_name };
     dir += ',';
     dir += dir_arg_short_name;
@@ -120,19 +125,19 @@ auto parse_cli_args(int argc, char** argv)
     log_arg += ',';
     log_arg += log_sett_short_arh_name;
 
-    string xml_arg{ xml_arg_name };
+    string xml_arg{ xml_dir_arg_name };
     xml_arg += ',';
     xml_arg += xml_short_arg_name;
 
-    options_description desc{ "Program options for descriptors. Create .inv file with descriptors for each binvox in input directory.\nSee: Novotni M., Klein R. 3D zernike descriptors for content based shape retrieval New York, New York, USA: ACM Press, 2003. 216 с." };
+    options_description desc{ u8"Program options for descriptors. Create .inv file with descriptors for each binvox in input directory.\nSee: Novotni M., Klein R. 3D zernike descriptors for content based shape retrieval New York, New York, USA: ACM Press, 2003. 216 с." };
     desc.add_options()
-        ("help,h", "-d path_to_directory -n max_order")
-        (dir.c_str(), value<string>(), "Path to directory with .binvox files.")
-        (order.c_str(), value<int>(), "Maximum order of Zernike moments. N in original paper.")
-        (thred_arg.c_str(), value<int>()->default_value(2), "Maximum number of threads for descriptor computing.")
-        (queue_arg.c_str(), value<int>()->default_value(500), "Maximum size of queue of file paths when recursive scanning directory. If size of queue is greater than parameter then scanning thread sleeps.")
-        (log_arg.c_str(), value<string>()->default_value("logsettings.ini"), "Path to file with log config. See https://www.boost.org/doc/libs/1_72_0/libs/log/doc/html/log/detailed/utilities.html#log.detailed.utilities.setup.settings_file")
-        (xml_arg.c_str(), value<string>()->default_value("xml-desc"), "Path to output directory to store XML with results")
+        (u8"help,h", u8"-d path_to_directory -n max_order")
+        (dir.c_str(), value<string>(), u8"Path to directory with .binvox files.")
+        (order.c_str(), value<int>(), u8"Maximum order of Zernike moments. N in original paper.")
+        (thred_arg.c_str(), value<int>()->default_value(2), u8"Maximum number of threads for descriptor computing.")
+        (queue_arg.c_str(), value<int>()->default_value(500), u8"Maximum size of queue of file paths when recursive scanning directory. If size of queue is greater than parameter then scanning thread sleeps.")
+        (log_arg.c_str(), value<string>()->default_value(u8"logsettings.ini"), u8"Path to file with log config. See https://www.boost.org/doc/libs/1_72_0/libs/log/doc/html/log/detailed/utilities.html#log.detailed.utilities.setup.settings_file")
+        (xml_arg.c_str(), value<string>()->default_value(u8"xml-desc"), u8"Path to output directory to store XML with results")
         ;
 
     variables_map vm;
@@ -144,60 +149,49 @@ auto parse_cli_args(int argc, char** argv)
 
 bool validate_args(const variables_map& args, const options_description& desc)
 {
-    if (args.count(dir_arg_name) != 1)
+    using std::cout;
+    using std::cerr;
+    using std::endl;
+    using std::string;
+
     {
-        cout << dir_arg_name << " occurred multiple times." << endl;
-        return false;
+        path input_dir{ args[dir_arg_name].as<string>() };
+
+        if (status(input_dir).type() != file_type::directory_file)
+        {
+            cerr << input_dir << u8" is not directory or does not exist." << endl;
+            return false;
+        }
     }
 
-    if (args.count(order_arg_name) != 1)
     {
-        cout << order_arg_name << " occurred multiple times." << endl;
-        return false;
+        int max_order{ args[order_arg_name].as<int>() };
+
+        if (max_order <= 0)
+        {
+            cerr << u8"Maximum order must be positive. Actual value is " << max_order << endl;
+            return false;
+        }
     }
 
-    if (args.count(thread_arg_name) != 1)
     {
-        cout << order_arg_name << " occurred multiple times." << endl;
-        return false;
+        int n_thread{ args[thread_arg_name].as<int>() };
+
+        if (n_thread <= 0)
+        {
+            cerr << u8"Number of thread must be positive. Actual value is " << n_thread << endl;
+            return false;
+        }
     }
 
-    if (args.count(queue_arg_name) != 1)
     {
-        cout << order_arg_name << " occurred multiple times." << endl;
-        return false;
-    }
+        int queue_size{ args[queue_arg_name].as<int>() };
 
-    path input_dir{ args[dir_arg_name].as<string>() };
-
-    if (status(input_dir).type() != file_type::directory_file)
-    {
-        cerr << input_dir << " is not directory or does not exist." << endl;
-        return false;
-    }
-
-    int max_order{ args[order_arg_name].as<int>() };
-
-    if (max_order <= 0)
-    {
-        cerr << "Maximum order must be positive. Actual value is " << max_order << endl;
-        return false;
-    }
-
-    int n_thread{ args[thread_arg_name].as<int>() };
-
-    if (n_thread <= 0)
-    {
-        cerr << "Number of thread must be positive. Actual value is " << max_order << endl;
-        return false;
-    }
-
-    int queue_size{ args[queue_arg_name].as<int>() };
-
-    if (queue_size <= 0)
-    {
-        cerr << "Queue size must be positive. Actual value is " << max_order << endl;
-        return false;
+        if (queue_size <= 0)
+        {
+            cerr << u8"Queue size must be positive. Actual value is " << queue_size << endl;
+            return false;
+        }
     }
 
     {
@@ -205,19 +199,19 @@ bool validate_args(const variables_map& args, const options_description& desc)
 
         if (status(log_sett).type() != file_type::regular_file)
         {
-            cerr << log_sett_arg_name << " is not file or does not exist." << endl;
+            cerr << log_sett << u8" is not file or does not exist." << endl;
             return false;
         }
     }
 
     {
-        path xml_dir{ args[xml_arg_name].as<string>() };
+        path xml_dir{ args[xml_dir_arg_name].as<string>() };
 
         if (exists(xml_dir))
         {
             if (status(xml_dir).type() != file_type::directory_file)
             {
-                cerr << xml_arg_name << " is not directory or does not exist." << endl;
+                cerr << xml_dir_arg_name << u8" is not directory or does not exist." << endl;
                 return false;
             }
         }
@@ -234,6 +228,11 @@ void clear()
 
 int main(int argc, char** argv)
 {
+    using std::cout;
+    using std::endl;
+    using std::cerr;
+    using std::string;
+
     LIBXML_TEST_VERSION
 
         variables_map args;
@@ -241,10 +240,10 @@ int main(int argc, char** argv)
     try
     {
         auto res_tuple = parse_cli_args(argc, argv);
-        args = get<0>(res_tuple);
-        auto desc = get<1>(res_tuple);
+        args = std::get<0>(res_tuple);
+        auto desc = std::get<1>(res_tuple);
 
-        if (args.count("help"))
+        if (args.count(u8"help"))
         {
             cout << desc << endl;
             return 0;
@@ -271,31 +270,40 @@ int main(int argc, char** argv)
     int max_order{ args[order_arg_name].as<int>() };
     int queue_size{ args[queue_arg_name].as<int>() };
     int thread_count{ args[thread_arg_name].as<int>() };
-    path xml_dir{ args[xml_arg_name].as<string>() };
+    path xml_dir{ args[xml_dir_arg_name].as<string>() };
 
     logging::logger_t& logger = logging::logger_main::get();
 
-    if (!exists(xml_dir))
+    try
     {
-        BOOST_LOG_SEV(logger, logging::severity_t::info) << "Create directory: " << xml_dir << std::endl;
-
-        if (!create_directories(xml_dir))
+        if (!exists(xml_dir))
         {
-            BOOST_LOG_SEV(logger, logging::severity_t::error) << "Cannot create directories" << std::endl;
+            BOOST_LOG_SEV(logger, logging::severity_t::info) << u8"Create directory: " << xml_dir << endl;
 
-            clear();
+            if (!create_directories(xml_dir))
+            {
+                BOOST_LOG_SEV(logger, logging::severity_t::error) << u8"Cannot create directories" << endl;
 
-            return 1;
+                clear();
+
+                return 1;
+            }
+        }
+
+        for (auto& path : directory_iterator(xml_dir))
+        {
+            if (path.path().extension() == u8".xml")
+            {
+                BOOST_LOG_SEV(logger, logging::severity_t::info) << u8"Delete " << path << endl;
+                remove(path);
+            }
         }
     }
-
-    for (auto& path : directory_iterator(xml_dir))
+    catch (const boost::filesystem::filesystem_error & exc)
     {
-        if (path.path().extension() == ".xml")
-        {
-            BOOST_LOG_SEV(logger, logging::severity_t::info) << "Delete " << path << std::endl;
-            remove(path);
-        }
+        BOOST_LOG_SEV(logger, logging::severity_t::error) << exc.what() << endl;
+        clear();
+        return 1;
     }
 
     parallel::recursive_compute(input_directory, max_order, queue_size, thread_count, xml_dir);
