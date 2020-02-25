@@ -4,7 +4,7 @@ find_package(LibXml2 REQUIRED)
 
 set(_precompiled_header "stdafx.h")
 
-add_executable(zernike3d main.cpp binvox_reader.hpp stdafx.cpp stdafx.h compute_descriptors.cpp compute_descriptors.h loggers.h xmlwriter.hpp xmlmerger.cpp xmlmerger.h)
+add_executable(zernike3d main.cpp binvox_reader.hpp stdafx.cpp stdafx.h compute_descriptors.cpp compute_descriptors.h loggers.h xmlwriter.hpp xmlmerger.cpp xmlmerger.h binvox_utils.hpp)
 
 if(MSVC)
 target_compile_options(zernike3d PRIVATE /Yu${_precompiled_header} PRIVATE /FI${_precompiled_header})

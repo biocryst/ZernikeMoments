@@ -8,6 +8,7 @@
 #include "loggers.h"
 #include "xmlwriter.hpp"
 #include "xmlmerger.h"
+#include "binvox_utils.hpp"
 
 namespace parallel
 {
