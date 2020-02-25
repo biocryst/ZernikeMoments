@@ -147,7 +147,6 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
             else
             {
                 canonical_order_voxels.resize(binvox_voxels.size());
-                std::fill(canonical_order_voxels.begin(), canonical_order_voxels.end(), VoxelType{});
                 binvox::utils::convert_to_canonical_order(binvox_voxels.begin(), canonical_order_voxels.begin(), dim);
 
                 // compute the zernike descriptors

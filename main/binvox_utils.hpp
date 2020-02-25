@@ -14,7 +14,7 @@ namespace binvox
                 {
                     for (size_t y = 0; y < dim; y++)
                     {
-                        output[((z * dim) + y) * dim + x] = *input++;
+                        output[(z * dim + y) * dim + x] = input[(x * dim + z) * dim + y];
                     }
                 }
             }
