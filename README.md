@@ -90,6 +90,13 @@ cmake --build .\build --target ALL_BUILD --config Release
 
 CMake supports only precompiled header for MSVS compiler. In this case, all files include implicitly `stdafx.h`.
 
+On Linux you may need to add follow lines:
+```
+find_package(Boost 1.71 REQUIRED COMPONENTS filesystem program_options log_setup log)
+
+target_link_libraries(zernike3d PRIVATE 3DZM PUBLIC Boost::log_setup PUBLIC Boost::log PUBLIC Boost::boost PUBLIC Boost::filesystem PUBLIC Boost::program_options PRIVATE ${LIBXML2_LIBRARIES})
+```
+
 ## How to use
 
 1. Copy `.\main\logsettings.ini` to directory with executable file of program.
