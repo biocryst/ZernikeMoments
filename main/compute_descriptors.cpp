@@ -92,7 +92,8 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
     using DescriptorType = double;
     using XMLWriterType = io::xml::XMLWriter<DescriptorType>;
 
-    Container voxels;
+    Container binvox_voxels;
+    Container canonical_order_voxels;
     size_t dim{};
 
     path path_to_voxel;
@@ -133,21 +134,25 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
                 break;
             }
 
-            std::this_thread::sleep_for(100ms);
+            std::this_thread::sleep_for(50ms);
         }
         else
         {
             BOOST_LOG_SEV(logger, severity_t::debug) << u8"Processing " << path_to_voxel << endl;
 
-            if (!io::binvox::read_binvox(path_to_voxel, voxels, dim))
+            if (!io::binvox::read_binvox(path_to_voxel, binvox_voxels, dim))
             {
                 BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot read binvox from " << path_to_voxel << endl;
             }
             else
             {
+                canonical_order_voxels.resize(binvox_voxels.size());
+                std::fill(canonical_order_voxels.begin(), canonical_order_voxels.end(), VoxelType{});
+                binvox::utils::convert_to_canonical_order(binvox_voxels.begin(), canonical_order_voxels.begin(), dim);
+
                 // compute the zernike descriptors
                 // This invoke changes voxels data
-                ZernikeDescriptor<DescriptorType, Container::iterator> zd(voxels.begin(), dim, max_order);
+                ZernikeDescriptor<DescriptorType, Container::iterator> zd(canonical_order_voxels.begin(), dim, max_order);
 
                 auto invs{ zd.get_invariants() };
 

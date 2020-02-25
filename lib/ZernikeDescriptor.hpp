@@ -185,7 +185,7 @@ private:
 
                         if (sqrLen > sqrRadius)
                         {
-                            voxels[index] = static_cast<VoxelType>(0.0);
+                            voxels[index] = static_cast<VoxelType>(0);
                         }
                     }
                 }
