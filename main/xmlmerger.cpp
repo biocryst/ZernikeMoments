@@ -96,7 +96,7 @@ bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path, bool is
 
     std::unique_ptr <xmlTextReader, decltype(xml_deleter)> reader = std::unique_ptr<xmlTextReader, decltype(xml_deleter)>(xml_creator(path), xml_deleter);
 
-    const xmlChar* attr_name = BAD_CAST u8"RootPath";
+    const xmlChar* attr_name = BAD_CAST u8"RootDir";
 
     bool is_root_found = !is_first;
 
@@ -125,6 +125,7 @@ bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path, bool is
                                 if (xmlStrEqual(attr->name, attr_name))
                                 {
                                     xmlChar* value = xmlNodeListGetString(attr->doc, attr->children, 0);
+                                    BOOST_LOG_SEV(logger, severity_t::debug) << "Read " << (const char*)value << std::endl;
                                     xmlTextWriterWriteAttribute(writer, attr_name, value);
                                     xmlFree(value);
                                 }
