@@ -2,7 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #include "xmlmerger.h"
 
-io::xml::XMLMerger::XMLMerger(const std::string& path_to_res, const std::string& node_name) : node_name(node_name)
+io::xml::XMLMerger::XMLMerger(const std::string& path_to_res, const std::string& node_name, const std::string& root_node_name) : node_name(node_name), root_node_name(root_node_name)
 {
     writer = xmlNewTextWriterFilename(path_to_res.c_str(), 0);
 
@@ -15,6 +15,12 @@ io::xml::XMLMerger::XMLMerger(const std::string& path_to_res, const std::string&
     {
         xmlFreeTextWriter(writer);
         throw std::invalid_argument(u8"node_name is empty");
+    }
+
+    if (root_node_name.empty())
+    {
+        xmlFreeTextWriter(writer);
+        throw std::invalid_argument(u8"root_node_name is empty");
     }
 }
 
@@ -37,21 +43,27 @@ bool io::xml::XMLMerger::merge_files(const std::vector<boost::filesystem::path>&
         return false;
     }
 
-    rc = xmlTextWriterStartElement(writer, BAD_CAST u8"Voxels");
+    rc = xmlTextWriterStartElement(writer, BAD_CAST root_node_name.c_str());
 
     if (rc < 0)
     {
-        BOOST_LOG_SEV(logger, severity_t::error) << "Cannot write root element" << std::endl;
+        BOOST_LOG_SEV(logger, severity_t::warning) << u8"Failed to write start of element." << std::endl;
         return false;
     }
+
+    bool is_first = true;
 
     for (const auto& path : xml_paths)
     {
         BOOST_LOG_SEV(logger, severity_t::trace) << "Merge: " << path << std::endl;
 
-        if (!merge_file(path))
+        if (!merge_file(path, is_first))
         {
             BOOST_LOG_SEV(logger, severity_t::warning) << "Cannot merge " << path << std::endl;
+        }
+        else
+        {
+            is_first = false;
         }
     }
 
@@ -66,7 +78,7 @@ bool io::xml::XMLMerger::merge_files(const std::vector<boost::filesystem::path>&
     return true;
 }
 
-bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path)
+bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path, bool is_first)
 {
     logger_t& logger = logging::logger_io::get();
 
@@ -84,6 +96,10 @@ bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path)
 
     std::unique_ptr <xmlTextReader, decltype(xml_deleter)> reader = std::unique_ptr<xmlTextReader, decltype(xml_deleter)>(xml_creator(path), xml_deleter);
 
+    const xmlChar* attr_name = BAD_CAST u8"RootPath";
+
+    bool is_root_found = !is_first;
+
     if (reader.get() != nullptr)
     {
         rc = xmlTextReaderRead(reader.get());
@@ -94,8 +110,39 @@ bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path)
 
             if (name != nullptr)
             {
-                if (xmlStrEqual(name, BAD_CAST node_name.c_str()))
+                if (is_first && xmlStrEqual(name, BAD_CAST root_node_name.c_str()))
                 {
+                    xmlNodePtr node = xmlTextReaderCurrentNode(reader.get());
+
+                    if (node != nullptr)
+                    {
+                        xmlAttr* attr = node->properties;
+
+                        while (attr != nullptr)
+                        {
+                            if (attr->name)
+                            {
+                                if (xmlStrEqual(attr->name, attr_name))
+                                {
+                                    xmlChar* value = xmlNodeListGetString(attr->doc, attr->children, 0);
+                                    xmlTextWriterWriteAttribute(writer, attr_name, value);
+                                    xmlFree(value);
+                                }
+                            }
+                            attr = attr->next;
+                        }
+                    }
+
+                    is_root_found = true;
+                }
+                else if (xmlStrEqual(name, BAD_CAST node_name.c_str()))
+                {
+                    if (!is_root_found)
+                    {
+                        BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot find root node. XML is incorrect." << std::endl;
+                        return false;
+                    }
+
                     xmlChar* content = xmlTextReaderReadOuterXml(reader.get());
 
                     if (content != nullptr)

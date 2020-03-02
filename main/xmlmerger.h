@@ -17,7 +17,7 @@ namespace io
         public:
 
             // node_name is name of node to select from temporary file
-            XMLMerger(const std::string& path_to_res, const std::string& node_name);
+            XMLMerger(const std::string& path_to_res, const std::string& node_name, const std::string& root_node_name);
 
             XMLMerger(const XMLMerger& other) = delete;
 
@@ -27,13 +27,13 @@ namespace io
             bool merge_files(const std::vector < boost::filesystem::path >& xml_paths);
 
         private:
-            bool merge_file(const boost::filesystem::path& path);
+            bool merge_file(const boost::filesystem::path& path, bool is_first);
 
             xmlTextReaderPtr reader = nullptr;
 
             xmlTextWriterPtr writer = nullptr;
 
-            std::string node_name;
+            std::string node_name, root_node_name;
 
             int rc{};
         };

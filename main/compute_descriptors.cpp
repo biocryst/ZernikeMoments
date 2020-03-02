@@ -20,7 +20,8 @@ void parallel::recursive_compute(const boost::filesystem::path& input_dir, int m
 
     for (size_t i{ 0 }; i < working_threads.size(); i++)
     {
-        working_threads.at(i) = thread(compute_descriptor, ref(all_voxel_paths), max_order, ref(is_stop), xml_dir, ref(xml_paths.at(i)));
+        xml_paths.at(i) = xml_dir;
+        working_threads.at(i) = thread(compute_descriptor, ref(all_voxel_paths), max_order, ref(is_stop), ref(xml_paths.at(i)), input_dir);
     }
 
     auto iterator = recursive_directory_iterator(input_dir);
@@ -64,7 +65,7 @@ void parallel::recursive_compute(const boost::filesystem::path& input_dir, int m
 
     try
     {
-        io::xml::XMLMerger  merger{ (xml_dir / u8"result.xml").string(), u8"Voxel" };
+        io::xml::XMLMerger  merger{ (xml_dir / u8"result.xml").string(), u8"Voxel", u8"Voxels" };
 
         if (!merger.merge_files(xml_paths))
         {
@@ -81,7 +82,7 @@ void parallel::recursive_compute(const boost::filesystem::path& input_dir, int m
     }
 }
 
-void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_bool& is_stop, const boost::filesystem::path& xml_dir, boost::filesystem::path& xml_output)
+void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_bool& is_stop, boost::filesystem::path& xml_path, const boost::filesystem::path& voxel_root_dir)
 {
     using namespace std;
     using namespace boost::filesystem;
@@ -100,23 +101,30 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
 
     logger_t& logger = logger_main::get();
 
+    if (!boost::filesystem::is_directory(xml_path))
+    {
+        BOOST_LOG_SEV(logger, severity_t::error) << u8"Cannot start thread because input path to XML is not initialized by directory." << endl;
+        is_stop = true;
+        return;
+    }
+
     {
         stringstream thread_id;
 
         thread_id << std::this_thread::get_id();
 
-        xml_output = u8"descriptor_";
-        xml_output += thread_id.str();
-        xml_output += u8".xml";
+        boost::filesystem::path file_path{ u8"descriptor_" };
+        file_path += thread_id.str();
+        file_path += u8".xml";
 
-        xml_output = xml_dir / xml_output;
+        xml_path /= file_path;
     }
 
     std::unique_ptr<XMLWriterType> writer_ptr;
 
     try
     {
-        writer_ptr = make_unique<XMLWriterType>(xml_output.string());
+        writer_ptr = make_unique<XMLWriterType>(xml_path.string(), voxel_root_dir.string());
     }
     catch (std::runtime_error & error)
     {
@@ -157,11 +165,11 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
 
                 if (!writer_ptr->write_descriptor(path_to_voxel, dim, invs))
                 {
-                    BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot save invariants to xml file: " << xml_output << endl;
+                    BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot save invariants to xml file: " << xml_path << endl;
                 }
                 else
                 {
-                    BOOST_LOG_SEV(logger, severity_t::info) << u8"Save invariants to file: " << xml_output << endl;
+                    BOOST_LOG_SEV(logger, severity_t::info) << u8"Save invariants to file: " << xml_path << endl;
                 }
             }
         }
