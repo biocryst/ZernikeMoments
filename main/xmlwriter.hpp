@@ -7,145 +7,161 @@
 
 namespace io
 {
-	namespace xml
-	{
-		template <typename DescriptorType>
-		class XMLWriter
-		{
-		public:
+    namespace xml
+    {
+        template <typename DescriptorType>
+        class XMLWriter
+        {
+        public:
 
-			XMLWriter(const boost::filesystem::path& path_to_xml)
-			{
-				logger = &logging::logger_io::get();
+            XMLWriter(const boost::filesystem::path& path_to_xml, const boost::filesystem::path& root_voxel_dir) : root_dir(root_voxel_dir)
+            {
+                logger = &logging::logger_io::get();
 
-				writer = xmlNewTextWriterFilename(path_to_xml.string().c_str(), 0);
+                if (root_dir.empty())
+                {
+                    throw std::runtime_error(u8"root_dir is empty");
+                }
 
-				if (writer == nullptr)
-				{
-					throw std::runtime_error(u8"Error creating the xml writer");
-				}
+                writer = xmlNewTextWriterFilename(path_to_xml.string().c_str(), 0);
 
-				rc = xmlTextWriterStartDocument(writer, nullptr, u8"UTF-8", nullptr);
+                if (writer == nullptr)
+                {
+                    throw std::runtime_error(u8"Error creating the xml writer");
+                }
 
-				if (rc < 0)
-				{
-					throw std::runtime_error(u8"Error when trying to write start of document");
-				}
+                rc = xmlTextWriterStartDocument(writer, nullptr, u8"UTF-8", nullptr);
 
-				rc = xmlTextWriterStartElement(writer, BAD_CAST u8"Voxels");
+                if (rc < 0)
+                {
+                    throw std::runtime_error(u8"Error when trying to write start of document");
+                }
 
-				if (rc < 0)
-				{
-					throw std::runtime_error(u8"Error when trying to write start of element");
-				}
-			}
+                rc = xmlTextWriterStartElement(writer, BAD_CAST u8"Voxels");
 
-			XMLWriter(const XMLWriter&) = delete;
+                if (rc < 0)
+                {
+                    throw std::runtime_error(u8"Error when trying to write start of element");
+                }
 
-			~XMLWriter()
-			{
-				rc = xmlTextWriterEndDocument(writer);
+                rc = xmlTextWriterWriteAttribute(writer, BAD_CAST u8"RootDir", BAD_CAST root_dir.string().c_str());
 
-				if (rc < 0)
-				{
-					BOOST_LOG_SEV(*logger, logging::severity_t::error) << u8"Cannot write end of document" << std::endl;
-				}
+                if (rc < 0)
+                {
+                    throw std::runtime_error(u8"Error when trying to write start of element");
+                }
+            }
 
-				xmlFreeTextWriter(writer);
-				logger = nullptr;
-			}
+            XMLWriter(const XMLWriter&) = delete;
 
-			bool write_descriptor(const boost::filesystem::path& path_to_voxel, size_t voxel_res, const std::vector<DescriptorType>& desc)
-			{
-				static_assert(std::is_floating_point<DescriptorType>::value, "Expected floating point type: float, double or long double");
+            ~XMLWriter()
+            {
+                rc = xmlTextWriterEndDocument(writer);
 
-				rc = xmlTextWriterStartElement(writer, BAD_CAST u8"Voxel");
+                if (rc < 0)
+                {
+                    BOOST_LOG_SEV(*logger, logging::severity_t::error) << u8"Cannot write end of document" << std::endl;
+                }
 
-				if (rc < 0)
-				{
-					return  false;
-				}
+                xmlFreeTextWriter(writer);
+                logger = nullptr;
+            }
 
-				rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST u8"Path", "%s", boost::filesystem::absolute(path_to_voxel).string().c_str());
+            bool write_descriptor(const boost::filesystem::path& path_to_voxel, size_t voxel_res, const std::vector<DescriptorType>& desc)
+            {
+                static_assert(std::is_floating_point<DescriptorType>::value, "Expected floating point type: float, double or long double");
 
-				if (rc < 0)
-				{
-					return false;
-				}
+                rc = xmlTextWriterStartElement(writer, BAD_CAST u8"Voxel");
 
-				rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST u8"GridResolution", "%zu", voxel_res);
+                if (rc < 0)
+                {
+                    return  false;
+                }
 
-				if (rc < 0)
-				{
-					return false;
-				}
+                boost::filesystem::path rel_path{ boost::filesystem::relative(path_to_voxel, root_dir) };
 
-				rc = xmlTextWriterStartElement(writer, BAD_CAST u8"Descriptor");
+                rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST u8"Path", "%s", rel_path.string().c_str());
 
-				if (rc < 0)
-				{
-					return  false;
-				}
+                if (rc < 0)
+                {
+                    return false;
+                }
 
-				rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST u8"Size", "%zu", desc.size());
+                rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST u8"GridResolution", "%zu", voxel_res);
 
-				if (rc < 0)
-				{
-					return  false;
-				}
+                if (rc < 0)
+                {
+                    return false;
+                }
 
-				for (size_t i = 0; i < desc.size(); i++)
-				{
-					std::string attr_name{ u8"Value" };
+                rc = xmlTextWriterStartElement(writer, BAD_CAST u8"Descriptor");
 
-					attr_name += std::to_string(i + 1);
+                if (rc < 0)
+                {
+                    return  false;
+                }
 
-					rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST attr_name.c_str(), double_formatter(), desc[i]);
+                rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST u8"Size", "%zu", desc.size());
 
-					if (rc < 0)
-					{
-						return  false;
-					}
-				}
+                if (rc < 0)
+                {
+                    return  false;
+                }
 
-				rc = xmlTextWriterEndElement(writer);
+                for (size_t i = 0; i < desc.size(); i++)
+                {
+                    std::string attr_name{ u8"Value" };
 
-				if (rc < 0)
-				{
-					return  false;
-				}
+                    attr_name += std::to_string(i + 1);
 
-				rc = xmlTextWriterEndElement(writer);
+                    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST attr_name.c_str(), double_formatter(), desc[i]);
 
-				if (rc < 0)
-				{
-					return  false;
-				}
+                    if (rc < 0)
+                    {
+                        return  false;
+                    }
+                }
 
-				return true;
-			}
-		private:
+                rc = xmlTextWriterEndElement(writer);
 
-			// Return formatter for printf, when type is long double
-			// bool value unused
-			template<typename T_ = DescriptorType, typename = std::enable_if_t<std::is_same<long double, T_>::value>>
-			constexpr const char* double_formatter(bool = false)
-			{
-				return  "%Lg";
-			}
+                if (rc < 0)
+                {
+                    return  false;
+                }
 
-			// Return formatter for printf
-			template<typename T_ = DescriptorType, typename = std::enable_if_t<!std::is_same<long double, T_>::value>>
-			constexpr const char* double_formatter()
-			{
-				return "%g";
-			}
+                rc = xmlTextWriterEndElement(writer);
 
-			int rc{};
+                if (rc < 0)
+                {
+                    return  false;
+                }
 
-			logging::logger_t* logger = nullptr;
+                return true;
+            }
+        private:
 
-			xmlTextWriterPtr writer = nullptr;
-		};
-	}
+            // Return formatter for printf, when type is long double
+            // bool value unused
+            template<typename T_ = DescriptorType, typename = std::enable_if_t<std::is_same<long double, T_>::value>>
+            constexpr const char* double_formatter(bool = false)
+            {
+                return  "%Lg";
+            }
+
+            // Return formatter for printf
+            template<typename T_ = DescriptorType, typename = std::enable_if_t<!std::is_same<long double, T_>::value>>
+            constexpr const char* double_formatter()
+            {
+                return "%g";
+            }
+
+            int rc{};
+
+            logging::logger_t* logger = nullptr;
+
+            xmlTextWriterPtr writer = nullptr;
+
+            boost::filesystem::path root_dir;
+        };
+    }
 }
