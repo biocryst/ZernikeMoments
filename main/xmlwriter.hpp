@@ -14,9 +14,14 @@ namespace io
         {
         public:
 
-            XMLWriter(const boost::filesystem::path& path_to_xml)
+            XMLWriter(const boost::filesystem::path& path_to_xml, const boost::filesystem::path& root_voxel_dir) : root_dir(root_voxel_dir)
             {
                 logger = &logging::logger_io::get();
+
+                if (root_dir.empty())
+                {
+                    throw std::runtime_error(u8"root_dir is empty");
+                }
 
                 writer = xmlNewTextWriterFilename(path_to_xml.string().c_str(), 0);
 
@@ -38,6 +43,13 @@ namespace io
                 {
                     throw std::runtime_error(u8"Error when trying to write start of element");
                 }
+
+                rc = xmlTextWriterWriteAttribute(writer, BAD_CAST u8"RootDir", BAD_CAST root_dir.string().c_str());
+
+                if (rc < 0)
+                {
+                    throw std::runtime_error(u8"Error when trying to write start of element");
+                }
             }
 
             XMLWriter(const XMLWriter&) = delete;
@@ -48,7 +60,7 @@ namespace io
 
                 if (rc < 0)
                 {
-                    BOOST_LOG_SEV(*logger, logging::severity_t::error) << "Cannot write end of document" << std::endl;
+                    BOOST_LOG_SEV(*logger, logging::severity_t::error) << u8"Cannot write end of document" << std::endl;
                 }
 
                 xmlFreeTextWriter(writer);
@@ -57,7 +69,7 @@ namespace io
 
             bool write_descriptor(const boost::filesystem::path& path_to_voxel, size_t voxel_res, const std::vector<DescriptorType>& desc)
             {
-                static_assert(std::is_floating_point<DescriptorType>::value, u8"Expected floating point type: float, double or long double");
+                static_assert(std::is_floating_point<DescriptorType>::value, "Expected floating point type: float, double or long double");
 
                 rc = xmlTextWriterStartElement(writer, BAD_CAST u8"Voxel");
 
@@ -66,7 +78,9 @@ namespace io
                     return  false;
                 }
 
-                rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST u8"Path", "%s", boost::filesystem::absolute(path_to_voxel).string().c_str());
+                boost::filesystem::path rel_path{ boost::filesystem::relative(path_to_voxel, root_dir) };
+
+                rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST u8"Path", "%s", rel_path.string().c_str());
 
                 if (rc < 0)
                 {
@@ -146,6 +160,8 @@ namespace io
             logging::logger_t* logger = nullptr;
 
             xmlTextWriterPtr writer = nullptr;
+
+            boost::filesystem::path root_dir;
         };
     }
 }

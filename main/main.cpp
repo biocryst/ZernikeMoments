@@ -113,9 +113,9 @@ std::tuple<variables_map, options_description> parse_cli_args(int argc, char** a
     order += ',';
     order += order_arg_short_name;
 
-    string thred_arg{ thread_arg_name };
-    thred_arg += ',';
-    thred_arg += thread_arg_short_name;
+    string thread_arg{ thread_arg_name };
+    thread_arg += ',';
+    thread_arg += thread_arg_short_name;
 
     string queue_arg{ queue_arg_name };
     queue_arg += ',';
@@ -129,12 +129,12 @@ std::tuple<variables_map, options_description> parse_cli_args(int argc, char** a
     xml_arg += ',';
     xml_arg += xml_short_arg_name;
 
-    options_description desc{ u8"Program options for descriptors. Create .inv file with descriptors for each binvox in input directory.\nSee: Novotni M., Klein R. 3D zernike descriptors for content based shape retrieval New York, New York, USA: ACM Press, 2003. 216 с." };
+    options_description desc{ u8"Program options for descriptors. Create XML file with descriptors for each binvox in input directory.\nSee: Novotni M., Klein R. 3D zernike descriptors for content based shape retrieval New York, New York, USA: ACM Press, 2003. 216 c." };
     desc.add_options()
         (u8"help,h", u8"-d path_to_directory -n max_order")
         (dir.c_str(), value<string>(), u8"Path to directory with .binvox files.")
         (order.c_str(), value<int>(), u8"Maximum order of Zernike moments. N in original paper.")
-        (thred_arg.c_str(), value<int>()->default_value(2), u8"Maximum number of threads for descriptor computing.")
+        (thread_arg.c_str(), value<int>()->default_value(2), u8"Maximum number of threads for descriptor computing.")
         (queue_arg.c_str(), value<int>()->default_value(500), u8"Maximum size of queue of file paths when recursive scanning directory. If size of queue is greater than parameter then scanning thread sleeps.")
         (log_arg.c_str(), value<string>()->default_value(u8"logsettings.ini"), u8"Path to file with log config. See https://www.boost.org/doc/libs/1_72_0/libs/log/doc/html/log/detailed/utilities.html#log.detailed.utilities.setup.settings_file")
         (xml_arg.c_str(), value<string>()->default_value(u8"xml-desc"), u8"Path to output directory to store XML with results")
@@ -153,6 +153,18 @@ bool validate_args(const variables_map& args, const options_description& desc)
     using std::cerr;
     using std::endl;
     using std::string;
+
+    if(args.count(dir_arg_name) != 1)
+    {
+        cerr << u8"Missing required argument: " << dir_arg_name  << endl;
+        return false;
+    }
+
+     if(args.count(order_arg_name) != 1)
+    {
+        cerr << u8"Missing required argument: " << order_arg_name  << endl;
+        return false;
+    }
 
     {
         path input_dir{ args[dir_arg_name].as<string>() };

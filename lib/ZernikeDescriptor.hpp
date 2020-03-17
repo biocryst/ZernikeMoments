@@ -185,7 +185,7 @@ private:
 
                         if (sqrLen > sqrRadius)
                         {
-                            voxels[index] = static_cast<VoxelType>(0.0);
+                            voxels[index] = static_cast<VoxelType>(0);
                         }
                     }
                 }
@@ -199,6 +199,7 @@ private:
  */
     void ComputeNormalization(InputVoxelIterator voxels)
     {
+        static_assert(std::is_floating_point<T>::value, "T must be float, double or long double");
         ScaledGeometricalMoments<InputVoxelIterator, T> gm(voxels, dim_, dim_, dim_, 0.0, 0.0, 0.0, 1.0);
 
         // compute the geometrical transform for no translation and scaling, first
@@ -287,7 +288,7 @@ private:
                 {
                     size_t index{ (z + d * y) * d + x };
 
-                    if (static_cast<double>(voxels[index]) > 0.9)
+                    if (static_cast<double>(_voxels[index]) > 0.9)
                     {
                         T mx = static_cast<T>(x) - _xCOG;
                         T my = static_cast<T>(y) - _yCOG;
@@ -321,7 +322,7 @@ private:
         // the edge length of the voxel grid in voxel units
         int d = _dim;
 
-        int nVoxels{ 0 };
+        size_t nVoxels{ 0 };
 
         T sum{ 0.0 };
 

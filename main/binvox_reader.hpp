@@ -124,8 +124,6 @@ namespace io
 
             voxels.resize(size);
 
-            std::fill(voxels.begin(), voxels.end(), VoxelType{});
-
             //
             // read voxel data
             //
