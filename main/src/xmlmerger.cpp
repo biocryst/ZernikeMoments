@@ -2,7 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #include "xmlmerger.h"
 
-io::xml::XMLMerger::XMLMerger(const std::string& path_to_res, const std::string& node_name, const std::string& root_node_name) : node_name(node_name), root_node_name(root_node_name)
+io::xml::XMLMerger::XMLMerger(const std::string & path_to_res, const std::string & node_name, const std::string & root_node_name) : node_name(node_name), root_node_name(root_node_name)
 {
     writer = xmlNewTextWriterFilename(path_to_res.c_str(), 0);
 
@@ -29,9 +29,9 @@ io::xml::XMLMerger::~XMLMerger()
     xmlFreeTextWriter(writer);
 }
 
-bool io::xml::XMLMerger::merge_files(const std::vector<boost::filesystem::path>& xml_paths)
+bool io::xml::XMLMerger::merge_files(const std::vector<boost::filesystem::path> & xml_paths)
 {
-    logger_t& logger = logging::logger_io::get();
+    logger_t & logger = logging::logger_io::get();
 
     BOOST_LOG_SEV(logger, severity_t::info) << u8"Number of files to merge: " << xml_paths.size() << std::endl;
 
@@ -53,7 +53,7 @@ bool io::xml::XMLMerger::merge_files(const std::vector<boost::filesystem::path>&
 
     bool is_first = true;
 
-    for (const auto& path : xml_paths)
+    for (const auto & path : xml_paths)
     {
         BOOST_LOG_SEV(logger, severity_t::trace) << "Merge: " << path << std::endl;
 
@@ -78,25 +78,25 @@ bool io::xml::XMLMerger::merge_files(const std::vector<boost::filesystem::path>&
     return true;
 }
 
-bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path, bool is_first)
+bool io::xml::XMLMerger::merge_file(const boost::filesystem::path & path, bool is_first)
 {
-    logger_t& logger = logging::logger_io::get();
+    logger_t & logger = logging::logger_io::get();
 
     BOOST_LOG_SEV(logger, severity_t::trace) << u8"Try to open: " << path << std::endl;
 
-    auto xml_deleter = [](xmlTextReader* reader)
+    auto xml_deleter = [](xmlTextReader * reader)
     {
         xmlFreeTextReader(reader);
     };
 
-    auto xml_creator = [](const boost::filesystem::path& path)
+    auto xml_creator = [](const boost::filesystem::path & path)
     {
-        return static_cast<xmlTextReader*>(xmlReaderForFile(path.string().c_str(), u8"UTF-8", 0));
+        return static_cast<xmlTextReader *>(xmlReaderForFile(path.string().c_str(), u8"UTF-8", 0));
     };
 
     std::unique_ptr <xmlTextReader, decltype(xml_deleter)> reader = std::unique_ptr<xmlTextReader, decltype(xml_deleter)>(xml_creator(path), xml_deleter);
 
-    const xmlChar* attr_name = BAD_CAST u8"RootDir";
+    const xmlChar * attr_name = BAD_CAST u8"RootDir";
 
     bool is_root_found = !is_first;
 
@@ -106,7 +106,7 @@ bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path, bool is
 
         while (rc == 1)
         {
-            const xmlChar* name = xmlTextReaderConstName(reader.get());
+            const xmlChar * name = xmlTextReaderConstName(reader.get());
 
             if (name != nullptr)
             {
@@ -116,7 +116,7 @@ bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path, bool is
 
                     if (node != nullptr)
                     {
-                        xmlAttr* attr = node->properties;
+                        xmlAttr * attr = node->properties;
 
                         while (attr != nullptr)
                         {
@@ -124,8 +124,8 @@ bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path, bool is
                             {
                                 if (xmlStrEqual(attr->name, attr_name))
                                 {
-                                    xmlChar* value = xmlNodeListGetString(attr->doc, attr->children, 0);
-                                    BOOST_LOG_SEV(logger, severity_t::debug) << "Read " << (const char*)value << std::endl;
+                                    xmlChar * value = xmlNodeListGetString(attr->doc, attr->children, 0);
+                                    BOOST_LOG_SEV(logger, severity_t::debug) << "Read " << (const char *)value << std::endl;
                                     xmlTextWriterWriteAttribute(writer, attr_name, value);
                                     xmlFree(value);
                                 }
@@ -144,7 +144,7 @@ bool io::xml::XMLMerger::merge_file(const boost::filesystem::path& path, bool is
                         return false;
                     }
 
-                    xmlChar* content = xmlTextReaderReadOuterXml(reader.get());
+                    xmlChar * content = xmlTextReaderReadOuterXml(reader.get());
 
                     if (content != nullptr)
                     {

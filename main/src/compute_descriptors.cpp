@@ -2,13 +2,13 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #include "compute_descriptors.h"
 
-void parallel::recursive_compute(const boost::filesystem::path& input_dir, int max_order, std::size_t queue_size, std::size_t max_thread, const boost::filesystem::path& xml_dir)
+void parallel::recursive_compute(const boost::filesystem::path & input_dir, int max_order, std::size_t queue_size, std::size_t max_thread, const boost::filesystem::path & xml_dir)
 {
     using namespace std;
     using namespace boost::filesystem;
     using namespace logging;
 
-    logger_t& logger = logger_main::get();
+    logger_t & logger = logger_main::get();
 
     TasksQueue all_voxel_paths{ queue_size };
 
@@ -26,7 +26,7 @@ void parallel::recursive_compute(const boost::filesystem::path& input_dir, int m
 
     auto iterator = recursive_directory_iterator(input_dir);
 
-    for (const auto& entry : iterator)
+    for (const auto & entry : iterator)
     {
         if (is_stop)
         {
@@ -56,7 +56,7 @@ void parallel::recursive_compute(const boost::filesystem::path& input_dir, int m
 
     is_stop = true;
 
-    for (auto& thread : working_threads)
+    for (auto & thread : working_threads)
     {
         thread.join();
     }
@@ -82,7 +82,7 @@ void parallel::recursive_compute(const boost::filesystem::path& input_dir, int m
     }
 }
 
-void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_bool& is_stop, boost::filesystem::path& xml_path, const boost::filesystem::path& voxel_root_dir)
+void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic_bool & is_stop, boost::filesystem::path & xml_path, const boost::filesystem::path & voxel_root_dir)
 {
     using namespace std;
     using namespace boost::filesystem;
@@ -99,7 +99,7 @@ void parallel::compute_descriptor(TasksQueue& queue, int max_order, std::atomic_
 
     path path_to_voxel;
 
-    logger_t& logger = logger_main::get();
+    logger_t & logger = logger_main::get();
 
     if (!boost::filesystem::is_directory(xml_path))
     {

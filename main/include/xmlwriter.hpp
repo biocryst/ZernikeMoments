@@ -10,11 +10,10 @@ namespace io
     namespace xml
     {
         template <typename DescriptorType>
-        class XMLWriter
-        {
+        class XMLWriter{
         public:
 
-            XMLWriter(const boost::filesystem::path& path_to_xml, const boost::filesystem::path& root_voxel_dir) : root_dir(root_voxel_dir)
+            XMLWriter(const boost::filesystem::path & path_to_xml, const boost::filesystem::path & root_voxel_dir) : root_dir(root_voxel_dir)
             {
                 logger = &logging::logger_io::get();
 
@@ -52,7 +51,7 @@ namespace io
                 }
             }
 
-            XMLWriter(const XMLWriter&) = delete;
+            XMLWriter(const XMLWriter &) = delete;
 
             ~XMLWriter()
             {
@@ -67,7 +66,7 @@ namespace io
                 logger = nullptr;
             }
 
-            bool write_descriptor(const boost::filesystem::path& path_to_voxel, size_t voxel_res, const std::vector<DescriptorType>& desc)
+            bool write_descriptor(const boost::filesystem::path & path_to_voxel, size_t voxel_res, const std::vector<DescriptorType> & desc)
             {
                 static_assert(std::is_floating_point<DescriptorType>::value, "Expected floating point type: float, double or long double");
 
@@ -143,21 +142,21 @@ namespace io
             // Return formatter for printf, when type is long double
             // bool value unused
             template<typename T_ = DescriptorType, typename = std::enable_if_t<std::is_same<long double, T_>::value>>
-            constexpr const char* double_formatter(bool = false)
+            constexpr const char * double_formatter(bool = false)
             {
                 return  "%Lg";
             }
 
             // Return formatter for printf
             template<typename T_ = DescriptorType, typename = std::enable_if_t<!std::is_same<long double, T_>::value>>
-            constexpr const char* double_formatter()
+            constexpr const char * double_formatter()
             {
                 return "%g";
             }
 
             int rc{};
 
-            logging::logger_t* logger = nullptr;
+            logging::logger_t * logger = nullptr;
 
             xmlTextWriterPtr writer = nullptr;
 

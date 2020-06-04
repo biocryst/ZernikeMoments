@@ -9,25 +9,24 @@ namespace io
 {
     namespace xml
     {
-        class XMLMerger
-        {
+        class XMLMerger{
             using logger_t = logging::logger_t;
             using severity_t = logging::severity_t;
 
         public:
 
             // node_name is name of node to select from temporary file
-            XMLMerger(const std::string& path_to_res, const std::string& node_name, const std::string& root_node_name);
+            XMLMerger(const std::string & path_to_res, const std::string & node_name, const std::string & root_node_name);
 
-            XMLMerger(const XMLMerger& other) = delete;
+            XMLMerger(const XMLMerger & other) = delete;
 
             ~XMLMerger();
 
             // Merge all temporary files
-            bool merge_files(const std::vector < boost::filesystem::path >& xml_paths);
+            bool merge_files(const std::vector < boost::filesystem::path > & xml_paths);
 
         private:
-            bool merge_file(const boost::filesystem::path& path, bool is_first);
+            bool merge_file(const boost::filesystem::path & path, bool is_first);
 
             xmlTextReaderPtr reader = nullptr;
 

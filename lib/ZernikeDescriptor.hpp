@@ -55,8 +55,7 @@ for more information, see the paper:
  * descriptors, means of reconstruction of orig. function, etc.
  */
 template<class T, class InputVoxelIterator>
-class ZernikeDescriptor
-{
+class ZernikeDescriptor{
 public:
     // ---- exported typedefs ----
     /// complex type
@@ -90,12 +89,13 @@ public:
         Reconstructs the original object from the 3D Zernike moments.
      */
     void Reconstruct(
-        ComplexT3D& _grid,          /**< result grid as 3D complex stl vector */
+        ComplexT3D & _grid,          /**< result grid as 3D complex stl vector */
         int _minN = 0,              /**< min value for n freq index */
         int _maxN = 100,            /**< max value for n freq index */
         int _minL = 0,              /**< min value for l freq index */
         int _maxL = 100             /**< max value for l freq index */
-    ) {
+    )
+    {
         // the scaling between the reconstruction and original grid
         T fac = (T)(_grid.size()) / (T)dim_;
 
@@ -112,7 +112,7 @@ public:
      * Saves the computed invariants into a binary file
      */
     bool SaveInvariants(
-        const std::string& path_to_file      /**< name of the output file */
+        const std::string & path_to_file      /**< name of the output file */
     )
     {
         std::ofstream outfile(path_to_file, std::ios_base::out);

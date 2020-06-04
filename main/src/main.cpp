@@ -54,20 +54,20 @@ for more information, see the paper:
 using namespace boost::program_options;
 using namespace boost::filesystem;
 
-constexpr char* order_arg_name{ u8"max-order" };
-constexpr char* order_arg_short_name{ u8"n" };
-constexpr char* dir_arg_name{ u8"dir" };
-constexpr char* dir_arg_short_name{ u8"d" };
-constexpr char* thread_arg_name{ u8"threads" };
-constexpr char* thread_arg_short_name{ u8"t" };
-constexpr char* queue_arg_name{ u8"queue-size" };
-constexpr char* queue_arg_short_name{ u8"s" };
-constexpr char* log_sett_arg_name{ u8"logconf" };
-constexpr char* log_sett_short_arh_name{ u8"l" };
-constexpr char* xml_dir_arg_name{ u8"output-dir" };
-constexpr char* xml_short_arg_name{ u8"o" };
+constexpr char * order_arg_name{ u8"max-order" };
+constexpr char * order_arg_short_name{ u8"n" };
+constexpr char * dir_arg_name{ u8"dir" };
+constexpr char * dir_arg_short_name{ u8"d" };
+constexpr char * thread_arg_name{ u8"threads" };
+constexpr char * thread_arg_short_name{ u8"t" };
+constexpr char * queue_arg_name{ u8"queue-size" };
+constexpr char * queue_arg_short_name{ u8"s" };
+constexpr char * log_sett_arg_name{ u8"logconf" };
+constexpr char * log_sett_short_arh_name{ u8"l" };
+constexpr char * xml_dir_arg_name{ u8"output-dir" };
+constexpr char * xml_short_arg_name{ u8"o" };
 
-bool init_logg_settings_from_file(const path& path_to_config)
+bool init_logg_settings_from_file(const path & path_to_config)
 {
     using std::ifstream;
     using std::cerr;
@@ -101,7 +101,7 @@ bool init_logg_settings_from_file(const path& path_to_config)
     return true;
 }
 
-std::tuple<variables_map, options_description> parse_cli_args(int argc, char** argv)
+std::tuple<variables_map, options_description> parse_cli_args(int argc, char ** argv)
 {
     using std::string;
 
@@ -147,22 +147,22 @@ std::tuple<variables_map, options_description> parse_cli_args(int argc, char** a
     return make_tuple(vm, desc);
 }
 
-bool validate_args(const variables_map& args, const options_description& desc)
+bool validate_args(const variables_map & args, const options_description & desc)
 {
     using std::cout;
     using std::cerr;
     using std::endl;
     using std::string;
 
-    if(args.count(dir_arg_name) != 1)
+    if (args.count(dir_arg_name) != 1)
     {
-        cerr << u8"Missing required argument: " << dir_arg_name  << endl;
+        cerr << u8"Missing required argument: " << dir_arg_name << endl;
         return false;
     }
 
-     if(args.count(order_arg_name) != 1)
+    if (args.count(order_arg_name) != 1)
     {
-        cerr << u8"Missing required argument: " << order_arg_name  << endl;
+        cerr << u8"Missing required argument: " << order_arg_name << endl;
         return false;
     }
 
@@ -238,7 +238,7 @@ void clear()
     boost::log::core::get()->remove_all_sinks();
 }
 
-int main(int argc, char** argv)
+int main(int argc, char ** argv)
 {
     using std::cout;
     using std::endl;
@@ -284,7 +284,7 @@ int main(int argc, char** argv)
     int thread_count{ args[thread_arg_name].as<int>() };
     path xml_dir{ args[xml_dir_arg_name].as<string>() };
 
-    logging::logger_t& logger = logging::logger_main::get();
+    logging::logger_t & logger = logging::logger_main::get();
 
     try
     {
@@ -302,7 +302,7 @@ int main(int argc, char** argv)
             }
         }
 
-        for (auto& path : directory_iterator(xml_dir))
+        for (auto & path : directory_iterator(xml_dir))
         {
             if (path.path().extension() == u8".xml")
             {
