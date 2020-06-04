@@ -6,17 +6,15 @@
 #include "binvox_reader.hpp"
 #include "ZernikeDescriptor.hpp"
 #include "loggers.h"
-#include "xmlwriter.hpp"
-#include "xmlmerger.h"
 #include "binvox_utils.hpp"
 
 namespace parallel
 {
-    using TasksQueue = boost::lockfree::stack <boost::filesystem::path, boost::lockfree::fixed_sized<true>>;
+    // Queue stores an absolute path as two parts: parent path and path relative to directory with data.
+    using TasksQueue = boost::lockfree::stack <std::tuple<boost::filesystem::path, boost::filesystem::path>, boost::lockfree::fixed_sized<true>>;
 
     void recursive_compute(const boost::filesystem::path & input_dir,
-        int
-        max_order, std::size_t max_queue_size, std::size_t max_worker_thread, const boost::filesystem::path & xml_dir);
+        int max_order, std::size_t max_queue_size, std::size_t max_worker_thread, sqlite::database & db);
 
-    void compute_descriptor(TasksQueue & queue, int max_order, std::atomic_bool & is_stop, boost::filesystem::path & xml_path, const boost::filesystem::path & voxel_root_dir);
+    void compute_descriptor(TasksQueue & queue, int max_order, std::atomic_bool & is_stop, sqlite::database & db);
 }

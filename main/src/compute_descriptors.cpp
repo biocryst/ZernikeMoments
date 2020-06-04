@@ -2,7 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #include "compute_descriptors.h"
 
-void parallel::recursive_compute(const boost::filesystem::path & input_dir, int max_order, std::size_t queue_size, std::size_t max_thread, const boost::filesystem::path & xml_dir)
+void parallel::recursive_compute(const boost::filesystem::path & input_dir, int max_order, std::size_t queue_size, std::size_t max_thread, sqlite::database & db)
 {
     using namespace std;
     using namespace boost::filesystem;
@@ -16,12 +16,9 @@ void parallel::recursive_compute(const boost::filesystem::path & input_dir, int 
 
     atomic_bool is_stop{ false };
 
-    vector<path> xml_paths{ working_threads.size() };
-
     for (size_t i{ 0 }; i < working_threads.size(); i++)
     {
-        xml_paths.at(i) = xml_dir;
-        working_threads.at(i) = thread(compute_descriptor, ref(all_voxel_paths), max_order, ref(is_stop), ref(xml_paths.at(i)), input_dir);
+        working_threads.at(i) = thread(compute_descriptor, ref(all_voxel_paths), max_order, ref(is_stop), ref(db));
     }
 
     auto iterator = recursive_directory_iterator(input_dir);
@@ -37,11 +34,15 @@ void parallel::recursive_compute(const boost::filesystem::path & input_dir, int 
         {
             path local_file{ entry.path() };
 
-            if (local_file.extension() == ".binvox")
+            if (local_file.extension() == u8".binvox")
             {
                 BOOST_LOG_SEV(logger, severity_t::info) << u8"Found " << local_file << endl;
 
-                while (!all_voxel_paths.push(local_file) && !is_stop)
+                path relative_path = relative(local_file, input_dir);
+
+                tuple<path, path> item = std::make_tuple(input_dir, relative_path);
+
+                while (!all_voxel_paths.push(item) && !is_stop)
                 {
                     this_thread::sleep_for(500ms);
                 }
@@ -49,7 +50,7 @@ void parallel::recursive_compute(const boost::filesystem::path & input_dir, int 
         }
     }
 
-    while (!all_voxel_paths.empty() && !is_stop)
+    while (!(all_voxel_paths.empty() || is_stop))
     {
         this_thread::sleep_for(500ms);
     }
@@ -61,28 +62,10 @@ void parallel::recursive_compute(const boost::filesystem::path & input_dir, int 
         thread.join();
     }
 
-    BOOST_LOG_SEV(logger, severity_t::info) << u8"Begin merge results" << endl;
-
-    try
-    {
-        io::xml::XMLMerger  merger{ (xml_dir / u8"result.xml").string(), u8"Voxel", u8"Voxels" };
-
-        if (!merger.merge_files(xml_paths))
-        {
-            BOOST_LOG_SEV(logger, severity_t::error) << u8"Cannot merge results" << endl;
-        }
-    }
-    catch (const std::runtime_error & error)
-    {
-        BOOST_LOG_SEV(logger, severity_t::error) << error.what() << endl;
-    }
-    catch (const std::invalid_argument & error)
-    {
-        BOOST_LOG_SEV(logger, severity_t::error) << error.what() << endl;
-    }
+    BOOST_LOG_SEV(logger, severity_t::info) << u8"Completed" << endl;
 }
 
-void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic_bool & is_stop, boost::filesystem::path & xml_path, const boost::filesystem::path & voxel_root_dir)
+void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic_bool & is_stop, sqlite::database & db)
 {
     using namespace std;
     using namespace boost::filesystem;
@@ -91,47 +74,14 @@ void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic
     using VoxelType = bool;
     using Container = vector<VoxelType>;
     using DescriptorType = double;
-    using XMLWriterType = io::xml::XMLWriter<DescriptorType>;
 
     Container binvox_voxels;
     Container canonical_order_voxels;
     size_t dim{};
 
-    path path_to_voxel;
-
     logger_t & logger = logger_main::get();
 
-    if (!boost::filesystem::is_directory(xml_path))
-    {
-        BOOST_LOG_SEV(logger, severity_t::error) << u8"Cannot start thread because input path to XML is not initialized by directory." << endl;
-        is_stop = true;
-        return;
-    }
-
-    {
-        stringstream thread_id;
-
-        thread_id << std::this_thread::get_id();
-
-        boost::filesystem::path file_path{ u8"descriptor_" };
-        file_path += thread_id.str();
-        file_path += u8".xml";
-
-        xml_path /= file_path;
-    }
-
-    std::unique_ptr<XMLWriterType> writer_ptr;
-
-    try
-    {
-        writer_ptr = make_unique<XMLWriterType>(xml_path.string(), voxel_root_dir.string());
-    }
-    catch (std::runtime_error & error)
-    {
-        BOOST_LOG_SEV(logger, severity_t::error) << error.what() << endl;
-        is_stop = true;
-        return;
-    }
+    tuple<path, path> path_to_voxel;
 
     while (true)
     {
@@ -146,11 +96,13 @@ void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic
         }
         else
         {
-            BOOST_LOG_SEV(logger, severity_t::debug) << u8"Processing " << path_to_voxel << endl;
+            path absolute_path = get<0>(path_to_voxel) / get<1>(path_to_voxel);
 
-            if (!io::binvox::read_binvox(path_to_voxel, binvox_voxels, dim))
+            BOOST_LOG_SEV(logger, severity_t::debug) << u8"Processing " << absolute_path << endl;
+
+            if (!io::binvox::read_binvox(absolute_path, binvox_voxels, dim))
             {
-                BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot read binvox from " << path_to_voxel << endl;
+                BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot read binvox from " << absolute_path << endl;
             }
             else
             {
@@ -163,14 +115,23 @@ void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic
 
                 auto invs{ zd.get_invariants() };
 
-                if (!writer_ptr->write_descriptor(path_to_voxel, dim, invs))
+                try
                 {
-                    BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot save invariants to xml file: " << xml_path << endl;
+                    db << u8"INSERT INTO zernike_descriptors (path, file_hash, desc_length, desc_value_size_bytes, descriptor) VALUES(?, ?, ?, ?, ?)"
+                        << get<1>(path_to_voxel).string()
+                        << u8"1212"
+                        << invs.size()
+                        << sizeof(DescriptorType)
+                        << invs;
                 }
-                else
+                catch (const sqlite::sqlite_exception & exc)
                 {
-                    BOOST_LOG_SEV(logger, severity_t::info) << u8"Save invariants to file: " << xml_path << endl;
+                    BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot save invariants to database." << exc.what() << endl << exc.get_extended_code() << endl << exc.get_sql() << endl;
+                    is_stop = true;
+                    return;
                 }
+
+                BOOST_LOG_SEV(logger, severity_t::info) << u8"Save invariants to database." << endl;
             }
         }
     }

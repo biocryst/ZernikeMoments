@@ -29,5 +29,7 @@
 #include <boost/math/special_functions/factorials.hpp>
 #include <boost/math/constants/constants.hpp>
 
+#include <sqlite_modern_cpp.h>
+
 #include <libxml/xmlwriter.h>
 #include <libxml/xmlreader.h>
