@@ -83,6 +83,16 @@ void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic
 
     tuple<path, path> path_to_voxel;
 
+    // hex string
+    string file_hash(picosha2::k_digest_size * 2, '\0');
+    vector<unsigned char> hash_buffer(picosha2::k_digest_size, 0);
+
+    using Row = sqldata::Row<DescriptorType>;
+
+    const size_t rows_buffer_size{ 10 };
+
+    sqldata::CollectionRows < DescriptorType> rows;
+
     while (true)
     {
         if (!queue.pop(path_to_voxel))
@@ -115,24 +125,59 @@ void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic
 
                 auto invs{ zd.get_invariants() };
 
-                try
+                if (!::hash::compute_sha256(absolute_path, hash_buffer, file_hash))
                 {
-                    db << u8"INSERT INTO zernike_descriptors (path, file_hash, desc_length, desc_value_size_bytes, descriptor) VALUES(?, ?, ?, ?, ?)"
-                        << get<1>(path_to_voxel).string()
-                        << u8"1212"
-                        << invs.size()
-                        << sizeof(DescriptorType)
-                        << invs;
-                }
-                catch (const sqlite::sqlite_exception & exc)
-                {
-                    BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot save invariants to database." << exc.what() << endl << exc.get_extended_code() << endl << exc.get_sql() << endl;
+                    BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot compute hash for " << absolute_path << endl;
                     is_stop = true;
                     return;
                 }
 
+                if (rows.size() < rows_buffer_size)
+                {
+                    rows.emplace_row(
+                        get<1>(path_to_voxel).generic_string(),
+                        file_hash,
+                        invs,
+                        max_order);
+                }
+                else
+                {
+                    try
+                    {
+                        db << rows;
+                    }
+                    catch (const sqlite::sqlite_exception & exc)
+                    {
+                        BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot save invariants to database." << exc.what() << endl << exc.get_extended_code() << endl << exc.get_sql() << endl;
+                        is_stop = true;
+                        return;
+                    }
+
+                    rows.clear();
+                    rows.emplace_row(
+                        get<1>(path_to_voxel).generic_string(),
+                        file_hash,
+                        invs,
+                        max_order);
+                }
+
                 BOOST_LOG_SEV(logger, severity_t::info) << u8"Save invariants to database." << endl;
             }
+        }
+    }
+
+    // Rest items
+    if (!rows.empty())
+    {
+        try
+        {
+            db << rows;
+        }
+        catch (const sqlite::sqlite_exception & exc)
+        {
+            BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot save invariants to database." << exc.what() << endl << exc.get_extended_code() << endl << exc.get_sql() << endl;
+            is_stop = true;
+            return;
         }
     }
 }

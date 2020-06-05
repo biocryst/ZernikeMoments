@@ -7,6 +7,8 @@
 #include "ZernikeDescriptor.hpp"
 #include "loggers.h"
 #include "binvox_utils.hpp"
+#include "compute_sha256.h"
+#include "sqlite_row.hpp"
 
 namespace parallel
 {

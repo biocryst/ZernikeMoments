@@ -31,5 +31,4 @@
 
 #include <sqlite_modern_cpp.h>
 
-#include <libxml/xmlwriter.h>
-#include <libxml/xmlreader.h>
+#include <picosha2.h>
