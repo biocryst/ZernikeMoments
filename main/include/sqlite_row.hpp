@@ -5,7 +5,8 @@
 namespace sqldata
 {
     template<typename DescriptorType>
-    struct Row{
+    struct Row
+    {
         std::string generic_path;
         std::string file_hash;
         std::vector <DescriptorType> descriptor;
@@ -45,7 +46,8 @@ namespace sqldata
     }
 
     template<typename TData>
-    class CollectionRows{
+    class CollectionRows
+    {
         using Row = Row<TData>;
     public:
         CollectionRows() = default;
