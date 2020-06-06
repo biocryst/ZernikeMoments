@@ -16,43 +16,96 @@ void parallel::recursive_compute(const boost::filesystem::path & input_dir, int 
 
     atomic_bool is_stop{ false };
 
-    for (size_t i{ 0 }; i < working_threads.size(); i++)
-    {
-        working_threads.at(i) = thread(compute_descriptor, ref(all_voxel_paths), max_order, ref(is_stop), ref(db));
-    }
+    using NodeType = tree::Node<std::string>;
 
-    auto iterator = recursive_directory_iterator(input_dir);
-
-    for (const auto & entry : iterator)
+    try
     {
-        if (is_stop)
+        auto tree{ tree::PathTree<NodeType>::build_tree_from_db(input_dir, db) };
+
+        for (size_t i{ 0 }; i < working_threads.size(); i++)
         {
-            break;
+            working_threads.at(i) = thread(compute_descriptor, ref(all_voxel_paths), max_order, ref(is_stop), ref(db));
         }
 
-        if (entry.status().type() == file_type::regular_file)
+        auto iterator = recursive_directory_iterator(input_dir);
+
+        // hex string
+        string file_hash(picosha2::k_digest_size * 2, '\0');
+        vector<unsigned char> hash_buffer(picosha2::k_digest_size, 0);
+
+        for (const auto & entry : iterator)
         {
-            path local_file{ entry.path() };
-
-            if (local_file.extension() == u8".binvox")
+            if (is_stop)
             {
-                BOOST_LOG_SEV(logger, severity_t::info) << u8"Found " << local_file << endl;
+                break;
+            }
 
-                path relative_path = relative(local_file, input_dir);
+            if (entry.status().type() == file_type::regular_file)
+            {
+                path local_file{ entry.path() };
 
-                tuple<path, path> item = std::make_tuple(input_dir, relative_path);
-
-                while (!all_voxel_paths.push(item) && !is_stop)
+                if (local_file.extension() == u8".binvox")
                 {
-                    this_thread::sleep_for(500ms);
+                    BOOST_LOG_SEV(logger, severity_t::info) << u8"Found " << local_file << endl;
+
+                    if (!::hash::compute_sha256(local_file, hash_buffer, file_hash))
+                    {
+                        BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot compute hash for " << local_file << endl;
+                        is_stop = true;
+                        continue;
+                    }
+
+                    shared_ptr<NodeType> node;
+
+                    bool is_new_node = tree.add_path(local_file, file_hash, node);
+
+                    if (is_new_node || file_hash != node->data())
+                    {
+                        path relative_path = relative(local_file, input_dir);
+
+                        if (!is_new_node)
+                        {
+                            BOOST_LOG_SEV(logger, severity_t::debug) << u8"File: " << local_file << " changed. Need to recompute." << endl;
+
+                            stringstream delete_query;
+
+                            delete_query << u8"DELETE FROM " << db::DbSchema::table_name() << " WHERE " << db::DbSchema::path_column() << " = ? AND " << db::DbSchema::max_order_column() << " = ?"
+                                << relative_path.generic_string()
+                                << max_order;
+                            try
+                            {
+                                db << delete_query.str();
+                            }
+                            catch (const sqlite::sqlite_exception & exc)
+                            {
+                                BOOST_LOG_SEV(logger, severity_t::error) << exc.what() << endl << exc.get_code() << endl << exc.get_sql() << endl;
+                                continue;
+                            }
+                        }
+
+                        tuple<path, path, string> item = std::make_tuple(input_dir, relative_path, file_hash);
+
+                        while (!all_voxel_paths.push(item) && !is_stop)
+                        {
+                            this_thread::sleep_for(500ms);
+                        }
+                    }
+                    else
+                    {
+                        BOOST_LOG_SEV(logger, severity_t::info) << u8"File: " << local_file << u8" with hash: " << file_hash << " already exists. Skip" << endl;
+                    }
                 }
+            }
+
+            while (!(all_voxel_paths.empty() || is_stop))
+            {
+                this_thread::sleep_for(500ms);
             }
         }
     }
-
-    while (!(all_voxel_paths.empty() || is_stop))
+    catch (const sqlite::sqlite_exception & exc)
     {
-        this_thread::sleep_for(500ms);
+        BOOST_LOG_SEV(logger, severity_t::error) << "Terminate main thread." << endl << exc.what() << endl << exc.get_code() << endl << exc.get_sql() << endl;
     }
 
     is_stop = true;
@@ -81,11 +134,7 @@ void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic
 
     logger_t & logger = logger_main::get();
 
-    tuple<path, path> path_to_voxel;
-
-    // hex string
-    string file_hash(picosha2::k_digest_size * 2, '\0');
-    vector<unsigned char> hash_buffer(picosha2::k_digest_size, 0);
+    tuple<path, path, string> path_to_voxel;
 
     using Row = sqldata::Row<DescriptorType>;
 
@@ -125,18 +174,11 @@ void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic
 
                 auto invs{ zd.get_invariants() };
 
-                if (!::hash::compute_sha256(absolute_path, hash_buffer, file_hash))
-                {
-                    BOOST_LOG_SEV(logger, severity_t::warning) << u8"Cannot compute hash for " << absolute_path << endl;
-                    is_stop = true;
-                    return;
-                }
-
                 if (rows.size() < rows_buffer_size)
                 {
                     rows.emplace_row(
                         get<1>(path_to_voxel).generic_string(),
-                        file_hash,
+                        get<2>(path_to_voxel),
                         invs,
                         max_order);
                 }
@@ -145,6 +187,7 @@ void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic
                     try
                     {
                         db << rows;
+                        BOOST_LOG_SEV(logger, severity_t::info) << u8"Save invariants to database." << endl;
                     }
                     catch (const sqlite::sqlite_exception & exc)
                     {
@@ -156,12 +199,10 @@ void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic
                     rows.clear();
                     rows.emplace_row(
                         get<1>(path_to_voxel).generic_string(),
-                        file_hash,
+                        get<2>(path_to_voxel),
                         invs,
                         max_order);
                 }
-
-                BOOST_LOG_SEV(logger, severity_t::info) << u8"Save invariants to database." << endl;
             }
         }
     }
@@ -172,6 +213,7 @@ void parallel::compute_descriptor(TasksQueue & queue, int max_order, std::atomic
         try
         {
             db << rows;
+            BOOST_LOG_SEV(logger, severity_t::info) << u8"Save invariants to database." << endl;
         }
         catch (const sqlite::sqlite_exception & exc)
         {

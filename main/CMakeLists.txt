@@ -38,9 +38,10 @@ add_executable(zernike3d
 	${CMAKE_CURRENT_SOURCE_DIR}/include/loggers.h 
 	${CMAKE_CURRENT_SOURCE_DIR}/include/binvox_utils.hpp  
 	${CMAKE_CURRENT_SOURCE_DIR}/include/compute_sha256.h 
-	${CMAKE_CURRENT_SOURCE_DIR}/include/path_tree.h 
+	${CMAKE_CURRENT_SOURCE_DIR}/include/path_tree.hpp 
 	${CMAKE_CURRENT_SOURCE_DIR}/src/compute_sha256.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/include/sqlite_row.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/include/db.h
 )
 target_compile_features(zernike3d PRIVATE cxx_std_14)
 target_compile_definitions(zernike3d PRIVATE BOOST_ALL_DYN_LINK)

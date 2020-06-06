@@ -15,6 +15,7 @@
 #include <iterator>
 #include <complex>
 #include <sstream>
+#include <set>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
