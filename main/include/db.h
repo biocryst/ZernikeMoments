@@ -19,7 +19,7 @@ namespace db
 
         static constexpr char * file_hash_column()
         {
-            return u8"file_hash";
+            return u8"file_hash_sha256";
         }
 
         static constexpr char * max_order_column()
@@ -53,11 +53,11 @@ namespace db
             query << u8"CREATE TABLE IF NOT EXISTS "
                 << table_name()
                 << u8" (" << id_column() << u8" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
-                << path_column() << u8" TEXT NOT NULL CHECK(length(path) > 0),"
-                << file_hash_column() << u8" TEXT NOT NULL CHECK(length(file_hash) > 0),"
-                << max_order_column() << u8" INTEGER NOT NULL CHECK(max_order > 0),"
-                << desc_length_column() << u8" INTEGER NOT NULL CHECK(desc_length > 0),"
-                << desc_value_size_bytes_column() << u8" INTEGER NOT NULL CHECK(desc_value_size_bytes > 0),"
+                << path_column() << u8" TEXT NOT NULL CHECK(length(" << path_column() << u8") > 0),"
+                << file_hash_column() << u8" TEXT NOT NULL CHECK(length(" << file_hash_column() << u8") > 0),"
+                << max_order_column() << u8" INTEGER NOT NULL CHECK(" << max_order_column() << u8" > 0), "
+                << desc_length_column() << u8" INTEGER NOT NULL CHECK(" << desc_length_column() << u8" > 0),"
+                << desc_value_size_bytes_column() << u8" INTEGER NOT NULL CHECK(" << desc_value_size_bytes_column() << u8" > 0),"
                 << descriptor_column() << u8" BLOB"
                 << ')';
 

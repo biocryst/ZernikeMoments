@@ -122,7 +122,10 @@ namespace tree
             PathTree<NodeType> tree(root_path);
 
             std::stringstream select_query{};
-            select_query << u8"SELECT " << db::DbSchema::path_column() << ',' << db::DbSchema::file_hash_column() << u8" FROM " << db::DbSchema::table_name();
+            select_query << u8"SELECT "
+                << db::DbSchema::path_column() << ','
+                << db::DbSchema::file_hash_column()
+                << u8" FROM " << db::DbSchema::table_name();
 
             std::shared_ptr<NodeType> node;
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "stdafx.h"
+#include "db.h"
 
 namespace sqldata
 {
@@ -22,7 +23,18 @@ namespace sqldata
     template<typename DescriptorType>
     sqlite::database & operator<<(sqlite::database & db, const Row<DescriptorType> & row)
     {
-        db << u8"INSERT INTO zernike_descriptors (path, file_hash, desc_length, desc_value_size_bytes, descriptor, max_order) VALUES(?, ?, ?, ?, ?, ?)"
+        std::stringstream insert_query;
+
+        using namespace db;
+
+        insert_query << u8"INSERT INTO " << DbSchema::table_name() << '('
+            << DbSchema::path_column() << ','
+            << DbSchema::file_hash_column() << ','
+            << DbSchema::desc_length_column() << ','
+            << DbSchema::desc_value_size_bytes_column() << ','
+            << DbSchema::descriptor_column() << ','
+            << DbSchema::max_order_column() << u8") VALUES (?, ?, ?, ?, ?, ?)";
+        db << insert_query.str()
             << row.generic_path
             << row.file_hash
             << row.descriptor.size()
@@ -72,7 +84,19 @@ namespace sqldata
         template<typename TData = TData>
         friend sqlite::database & operator<<(sqlite::database & db, const CollectionRows <TData > & row_collection)
         {
-            auto query = db << u8"INSERT INTO zernike_descriptors (path, file_hash, desc_length, desc_value_size_bytes, descriptor, max_order) VALUES(?, ?, ?, ?, ?, ?)";
+            std::stringstream insert_query;
+
+            using namespace db;
+
+            insert_query << u8"INSERT INTO " << DbSchema::table_name() << '('
+                << DbSchema::path_column() << ','
+                << DbSchema::file_hash_column() << ','
+                << DbSchema::desc_length_column() << ','
+                << DbSchema::desc_value_size_bytes_column() << ','
+                << DbSchema::descriptor_column() << ','
+                << DbSchema::max_order_column() << u8") VALUES (?, ?, ?, ?, ?, ?)";
+
+            auto query = db << insert_query.str();
 
             for (const auto & row : row_collection._rows)
             {
