@@ -1,11 +1,15 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 #pragma once
 
 #include "stdafx.h"
+#include "db.h"
 
 namespace sqldata
 {
     template<typename DescriptorType>
-    struct Row{
+    struct Row
+    {
         std::string generic_path;
         std::string file_hash;
         std::vector <DescriptorType> descriptor;
@@ -19,7 +23,18 @@ namespace sqldata
     template<typename DescriptorType>
     sqlite::database & operator<<(sqlite::database & db, const Row<DescriptorType> & row)
     {
-        db << u8"INSERT INTO zernike_descriptors (path, file_hash, desc_length, desc_value_size_bytes, descriptor, max_order) VALUES(?, ?, ?, ?, ?, ?)"
+        std::stringstream insert_query;
+
+        using namespace db;
+
+        insert_query << u8"INSERT INTO " << DbSchema::table_name() << '('
+            << DbSchema::path_column() << ','
+            << DbSchema::file_hash_column() << ','
+            << DbSchema::desc_length_column() << ','
+            << DbSchema::desc_value_size_bytes_column() << ','
+            << DbSchema::descriptor_column() << ','
+            << DbSchema::max_order_column() << u8") VALUES (?, ?, ?, ?, ?, ?)";
+        db << insert_query.str()
             << row.generic_path
             << row.file_hash
             << row.descriptor.size()
@@ -45,7 +60,8 @@ namespace sqldata
     }
 
     template<typename TData>
-    class CollectionRows{
+    class CollectionRows
+    {
         using Row = Row<TData>;
     public:
         CollectionRows() = default;
@@ -68,7 +84,19 @@ namespace sqldata
         template<typename TData = TData>
         friend sqlite::database & operator<<(sqlite::database & db, const CollectionRows <TData > & row_collection)
         {
-            auto query = db << u8"INSERT INTO zernike_descriptors (path, file_hash, desc_length, desc_value_size_bytes, descriptor, max_order) VALUES(?, ?, ?, ?, ?, ?)";
+            std::stringstream insert_query;
+
+            using namespace db;
+
+            insert_query << u8"INSERT INTO " << DbSchema::table_name() << '('
+                << DbSchema::path_column() << ','
+                << DbSchema::file_hash_column() << ','
+                << DbSchema::desc_length_column() << ','
+                << DbSchema::desc_value_size_bytes_column() << ','
+                << DbSchema::descriptor_column() << ','
+                << DbSchema::max_order_column() << u8") VALUES (?, ?, ?, ?, ?, ?)";
+
+            auto query = db << insert_query.str();
 
             for (const auto & row : row_collection._rows)
             {

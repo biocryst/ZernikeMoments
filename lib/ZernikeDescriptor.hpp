@@ -55,7 +55,8 @@ for more information, see the paper:
  * descriptors, means of reconstruction of orig. function, etc.
  */
 template<class T, class InputVoxelIterator>
-class ZernikeDescriptor{
+class ZernikeDescriptor
+{
 public:
     // ---- exported typedefs ----
     /// complex type

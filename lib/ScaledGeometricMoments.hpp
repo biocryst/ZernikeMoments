@@ -53,7 +53,8 @@ using std::vector;
     \param MomentT  type of the moments -- recommended to be double
  */
 template<class InputVoxelIterator, class MomentT>
-class ScaledGeometricalMoments{
+class ScaledGeometricalMoments
+{
 public:
     // ---- public typedefs ----
     /// the moment type

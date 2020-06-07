@@ -9,11 +9,12 @@
 #include "binvox_utils.hpp"
 #include "compute_sha256.h"
 #include "sqlite_row.hpp"
+#include "path_tree.hpp"
 
 namespace parallel
 {
     // Queue stores an absolute path as two parts: parent path and path relative to directory with data.
-    using TasksQueue = boost::lockfree::stack <std::tuple<boost::filesystem::path, boost::filesystem::path>, boost::lockfree::fixed_sized<true>>;
+    using TasksQueue = boost::lockfree::stack <std::tuple<boost::filesystem::path, boost::filesystem::path, std::string>, boost::lockfree::fixed_sized<true>>;
 
     void recursive_compute(const boost::filesystem::path & input_dir,
         int max_order, std::size_t max_queue_size, std::size_t max_worker_thread, sqlite::database & db);

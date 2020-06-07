@@ -50,6 +50,7 @@ for more information, see the paper:
 
 #include "stdafx.h"
 #include "compute_descriptors.h"
+#include "db.h"
 
 namespace cliargs
 {
@@ -242,21 +243,6 @@ void clear()
     boost::log::core::get()->remove_all_sinks();
 }
 
-void init_db(sqlite::database & db)
-{
-    db << u8"CREATE TABLE IF NOT EXISTS zernike_descriptors ("
-        u8"   id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,"
-        u8"   path TEXT NOT NULL CHECK(length(path) > 0),"
-        u8"   file_hash TEXT NOT NULL CHECK(length(file_hash) > 0),"
-        u8"   max_order INTEGER NOT NULL CHECK(max_order > 0),"
-        u8"   desc_length INTEGER NOT NULL CHECK(desc_length > 0),"
-        u8"   desc_value_size_bytes INTEGER NOT NULL CHECK(desc_value_size_bytes > 0),"
-        u8"   descriptor BLOB"
-        ");";
-    db << u8"CREATE INDEX IF NOT EXISTS hash_index ON zernike_descriptors (file_hash)";
-    db << u8"CREATE INDEX IF NOT EXISTS path_index ON zernike_descriptors (path)";
-}
-
 int main(int argc, char ** argv)
 {
     using std::cout;
@@ -315,7 +301,7 @@ int main(int argc, char ** argv)
 
         sqlite::database db(db_path.string(), config);
 
-        init_db(db);
+        db::DbSchema::init_db(db);
 
         parallel::recursive_compute(input_directory, max_order, queue_size, thread_count, db);
 
@@ -323,7 +309,7 @@ int main(int argc, char ** argv)
     }
     catch (const sqlite::sqlite_exception & exc)
     {
-        BOOST_LOG_SEV(logger, logging::severity_t::error) << exc.what() << endl;
+        BOOST_LOG_SEV(logger, logging::severity_t::error) << exc.what() << endl << exc.get_code() << endl << exc.get_sql() << endl;
         clear();
         return 1;
     }

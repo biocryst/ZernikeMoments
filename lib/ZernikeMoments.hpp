@@ -49,7 +49,8 @@ for more information, see the paper:
  * of order (p_,q_,r_)
  */
 template<class T>
-struct ComplexCoeff{
+struct ComplexCoeff
+{
     typedef     std::complex<T>     ValueT;
 
     /**
@@ -79,7 +80,8 @@ struct ComplexCoeff{
  * Class representing the Zernike moments
  */
 template<class InputVoxelIterator, class MomentT>
-class ZernikeMoments{
+class ZernikeMoments
+{
 public:
     // ---- public typedefs ----
     typedef MomentT             T;
