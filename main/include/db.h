@@ -7,42 +7,42 @@ namespace db
     class DbSchema
     {
     public:
-        static constexpr char * id_column()
+        static constexpr const char * id_column()
         {
             return u8"id";
         }
 
-        static constexpr char * path_column()
+        static constexpr const char * path_column()
         {
             return u8"path";
         }
 
-        static constexpr char * file_hash_column()
+        static constexpr const char * file_hash_column()
         {
             return u8"file_hash_sha256";
         }
 
-        static constexpr char * max_order_column()
+        static constexpr const char * max_order_column()
         {
             return u8"max_order";
         }
 
-        static constexpr char * desc_length_column()
+        static constexpr const char * desc_length_column()
         {
             return u8"desc_length";
         }
 
-        static constexpr char * desc_value_size_bytes_column()
+        static constexpr const char * desc_value_size_bytes_column()
         {
             return u8"desc_value_size_bytes";
         }
 
-        static constexpr char * descriptor_column()
+        static constexpr const char * descriptor_column()
         {
             return u8"descriptor";
         }
 
-        static constexpr char * table_name()
+        static constexpr const char * table_name()
         {
             return u8"zernike_descriptors";
         }

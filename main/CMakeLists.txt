@@ -1,4 +1,3 @@
-
 find_package(Boost 1.71 REQUIRED COMPONENTS filesystem program_options log)
 find_package(SQLite3 REQUIRED)
 
@@ -9,7 +8,11 @@ set(SQLITE_MODERN_CPP_INCLUDE_DIR "" CACHE PATH "A path to directory which conta
 set(PicoSHA2_INCLUDE_DIR "" CACHE PATH "A path to directory which contains picosha2.h file. See official repositiry: https://github.com/okdshin/PicoSHA2")
 
 if(NOT PicoSHA2_INCLUDE_DIR)
-message(FATAL_ERROR "You need set path to PicoSHA2")
+message(FATAL_ERROR "You need set path to PicoSHA2 header dir. Set PicoSHA2_INCLUDE_DIR")
+endif()
+
+if(NOT SQLITE_MODERN_CPP_INCLUDE_DIR)
+message(FATAL_ERROR "You need set path to sqlite_modern_cpp header dir. Set SQLITE_MODERN_CPP_INCLUDE_DIR")
 endif()
 
 find_file(SQLITE_MODERN_CPP_HEADER sqlite_modern_cpp.h ${SQLITE_MODERN_CPP_INCLUDE_DIR})
@@ -45,6 +48,6 @@ add_executable(zernike3d
 )
 target_compile_features(zernike3d PRIVATE cxx_std_14)
 target_compile_definitions(zernike3d PRIVATE BOOST_ALL_DYN_LINK)
-target_include_directories(zernike3d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include PRIVATE ${SQLITE_MODERN_CPP_INCLUDE_DIR} PRIVATE ${PicoSHA2_HEADER})
+target_include_directories(zernike3d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include PRIVATE ${SQLITE_MODERN_CPP_INCLUDE_DIR} PRIVATE ${PicoSHA2_INCLUDE_DIR})
 target_precompile_headers(zernike3d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/stdafx.h)
-target_link_libraries(zernike3d PRIVATE 3DZM PRIVATE SQLite::SQLite3 PRIVATE Boost::log PRIVATE Boost::boost PRIVATE Boost::filesystem PRIVATE Boost::program_options)
+target_link_libraries(zernike3d PRIVATE 3DZM PRIVATE SQLite::SQLite3 PRIVATE Boost::log PRIVATE Boost::boost PRIVATE Boost::filesystem PRIVATE Boost::program_options PRIVATE Boost::dynamic_linking )

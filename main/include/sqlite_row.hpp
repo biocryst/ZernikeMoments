@@ -62,7 +62,7 @@ namespace sqldata
     template<typename TData>
     class CollectionRows
     {
-        using Row = Row<TData>;
+        using RowT = Row<TData>;
     public:
         CollectionRows() = default;
 
@@ -70,7 +70,7 @@ namespace sqldata
 
         CollectionRows(const CollectionRows & collection) = delete;
 
-        void add_row(const Row & row)
+        void add_row(const RowT & row)
         {
             _rows.push_back(row);
         }
@@ -81,7 +81,6 @@ namespace sqldata
             _rows.emplace_back(std::forward<Args>(args)...);
         }
 
-        template<typename TData = TData>
         friend sqlite::database & operator<<(sqlite::database & db, const CollectionRows <TData > & row_collection)
         {
             std::stringstream insert_query;
@@ -122,6 +121,6 @@ namespace sqldata
         }
 
     private:
-        std::vector < Row> _rows;
+        std::vector < RowT> _rows;
     };
 }

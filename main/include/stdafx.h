@@ -16,6 +16,7 @@
 #include <complex>
 #include <sstream>
 #include <set>
+#include <stack>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>

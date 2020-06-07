@@ -54,18 +54,18 @@ for more information, see the paper:
 
 namespace cliargs
 {
-    constexpr char * order_arg_name{ u8"max-order" };
-    constexpr char * order_arg_short_name{ u8"n" };
-    constexpr char * dir_arg_name{ u8"dir" };
-    constexpr char * dir_arg_short_name{ u8"d" };
-    constexpr char * thread_arg_name{ u8"threads" };
-    constexpr char * thread_arg_short_name{ u8"t" };
-    constexpr char * queue_arg_name{ u8"queue-size" };
-    constexpr char * queue_arg_short_name{ u8"s" };
-    constexpr char * log_sett_arg_name{ u8"logconf" };
-    constexpr char * log_sett_short_arh_name{ u8"l" };
-    constexpr char * db_arg_name{ u8"output-dir" };
-    constexpr char * db_short_arg_name{ u8"o" };
+    constexpr const char * order_arg_name{ u8"max-order" };
+    constexpr const char * order_arg_short_name{ u8"n" };
+    constexpr const char * dir_arg_name{ u8"dir" };
+    constexpr const char * dir_arg_short_name{ u8"d" };
+    constexpr const char * thread_arg_name{ u8"threads" };
+    constexpr const char * thread_arg_short_name{ u8"t" };
+    constexpr const char * queue_arg_name{ u8"queue-size" };
+    constexpr const char * queue_arg_short_name{ u8"s" };
+    constexpr const char * log_sett_arg_name{ u8"logconf" };
+    constexpr const char * log_sett_short_arh_name{ u8"l" };
+    constexpr const char * db_arg_name{ u8"output-dir" };
+    constexpr const char * db_short_arg_name{ u8"o" };
 }
 
 bool init_logg_settings_from_file(const boost::filesystem::path & path_to_config)
