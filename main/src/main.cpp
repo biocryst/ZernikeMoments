@@ -64,7 +64,7 @@ namespace cliargs
     constexpr const char * queue_arg_short_name{ u8"s" };
     constexpr const char * log_sett_arg_name{ u8"logconf" };
     constexpr const char * log_sett_short_arh_name{ u8"l" };
-    constexpr const char * db_arg_name{ u8"output-dir" };
+    constexpr const char * db_arg_name{ u8"output-db" };
     constexpr const char * db_short_arg_name{ u8"o" };
 }
 

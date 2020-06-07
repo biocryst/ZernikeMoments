@@ -1,4 +1,4 @@
-find_package(Boost 1.71 REQUIRED COMPONENTS filesystem program_options log)
+find_package(Boost 1.71 REQUIRED COMPONENTS filesystem program_options log log_setup)
 find_package(SQLite3 REQUIRED)
 
 # sqlite_modern
@@ -47,7 +47,6 @@ add_executable(zernike3d
 	${CMAKE_CURRENT_SOURCE_DIR}/include/db.h
 )
 target_compile_features(zernike3d PRIVATE cxx_std_14)
-target_compile_definitions(zernike3d PRIVATE BOOST_ALL_DYN_LINK)
 target_include_directories(zernike3d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include PRIVATE ${SQLITE_MODERN_CPP_INCLUDE_DIR} PRIVATE ${PicoSHA2_INCLUDE_DIR})
 target_precompile_headers(zernike3d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/stdafx.h)
-target_link_libraries(zernike3d PRIVATE 3DZM PRIVATE SQLite::SQLite3 PRIVATE Boost::log PRIVATE Boost::boost PRIVATE Boost::filesystem PRIVATE Boost::program_options PRIVATE Boost::dynamic_linking )
+target_link_libraries(zernike3d PRIVATE 3DZM PRIVATE SQLite::SQLite3 PRIVATE Boost::log_setup PRIVATE Boost::log PRIVATE Boost::boost PRIVATE Boost::filesystem PRIVATE Boost::program_options PRIVATE Boost::dynamic_linking)

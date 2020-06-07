@@ -51,8 +51,10 @@ for more information, see the paper:
 
 ## Requirements
 
-1. CMake 3.10 or higher
-2. Boost.Filesystem, Boost.Program_options, Boost.Log, Boost.Math, Boost.Lockfree, Libxml2.
+1. CMake 3.17 or higher
+2. Boost.Filesystem, Boost.Program_options, Boost.Log,  Boost.Log_setup, Boost.Math, Boost.Lockfree 1.70 or higher.
+3. [PicoSHA2 (header only)](https://github.com/okdshin/PicoSHA2)
+4. [sqlite modern cpp](https://github.com/SqliteModernCpp/sqlite_modern_cpp)
 3. Compiler with C++14.
 
 ## Building
@@ -60,23 +62,20 @@ for more information, see the paper:
 For simplicity you can install [vcpkg](https://github.com/microsoft/vcpkg).
 
 Create a new directory `build`.
+```
+mkdir build
+```
 
 ### Generating project
 
 Run CMake:
 ```
-cmake -DCMAKE_BUILD_TYPE=Release  -S . -B .\build
+cmake -A x64 -DCMAKE_BUILD_TYPE=Release -DSQLITE_MODERN_CPP_INCLUDE_DIR:PATH="<path_to_modern_sqlite_header>" -DPicoSHA2_INCLUDE_DIR:PATH="<path_to_picosha2_header>" -DBoost_DIR="<path_to_boost_cmake_config_dir>" -S . -B .\build
 ```
 
-If you have vcpkg, then:
+If you have vcpkg and Visual Studio 2019:
 ```
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="<path_to_installed_vcpkg_dir>\vcpkg\scripts\buildsystems\vcpkg.cmake"  -S . -B .\build
-```
-
-Example for Visual Studio 2019:
-```
-cmake -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="<path_to_installed_vcpkg_dir>\vcpkg\scripts\buildsystems\vcpkg.cmake" -S . -B .\build
-
+cmake -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE:FILEPATH="<path to_vcpkg>\vcpkg\scripts\buildsystems\vcpkg.cmake" -DSQLITE_MODERN_CPP_INCLUDE_DIR:PATH="<path_to_modern_sqlite_header>" -DPicoSHA2_INCLUDE_DIR:PATH="<path_to_picosha2_header>" -S . -B .\build
 ```
 
 ### Compilation
@@ -86,23 +85,12 @@ Run:
 cmake --build .\build --target ALL_BUILD --config Release
 ```
 
-### Remarks
-
-CMake supports only precompiled header for MSVS compiler. In this case, all files include implicitly `stdafx.h`.
-
-On Linux you may need to add follow lines:
-```
-find_package(Boost 1.71 REQUIRED COMPONENTS filesystem program_options log_setup log)
-
-target_link_libraries(zernike3d PRIVATE 3DZM PUBLIC Boost::log_setup PUBLIC Boost::log PUBLIC Boost::boost PUBLIC Boost::filesystem PUBLIC Boost::program_options PRIVATE ${LIBXML2_LIBRARIES})
-```
-
 ## How to use
 
 1. Copy `.\main\logsettings.ini` to directory with executable file of program.
 2. Run program: `.\zernike3d.exe -d <path_to_directory_with_binvox> -n 20 -t 4`.
 
-The program computes Zernike Descriptors for all binvox files in the directory and subdirectories. It saves results in XML file `/xml-desc/results.xml`. By default directory `xml-desc` is in the same directory where executable is. For more information see: `.\zernike3d.exe --help`.
+The program computes Zernike Descriptors for all binvox files in the directory and subdirectories. It saves results in sqlite database file `descriptors.sqlite`. For more information see: `.\zernike3d.exe --help`.
 
 
 ## Voxelization
