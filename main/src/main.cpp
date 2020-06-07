@@ -50,24 +50,25 @@ for more information, see the paper:
 
 #include "stdafx.h"
 #include "compute_descriptors.h"
+#include "db.h"
 
-using namespace boost::program_options;
-using namespace boost::filesystem;
+namespace cliargs
+{
+    constexpr const char * order_arg_name{ u8"max-order" };
+    constexpr const char * order_arg_short_name{ u8"n" };
+    constexpr const char * dir_arg_name{ u8"dir" };
+    constexpr const char * dir_arg_short_name{ u8"d" };
+    constexpr const char * thread_arg_name{ u8"threads" };
+    constexpr const char * thread_arg_short_name{ u8"t" };
+    constexpr const char * queue_arg_name{ u8"queue-size" };
+    constexpr const char * queue_arg_short_name{ u8"s" };
+    constexpr const char * log_sett_arg_name{ u8"logconf" };
+    constexpr const char * log_sett_short_arh_name{ u8"l" };
+    constexpr const char * db_arg_name{ u8"output-db" };
+    constexpr const char * db_short_arg_name{ u8"o" };
+}
 
-constexpr char* order_arg_name{ u8"max-order" };
-constexpr char* order_arg_short_name{ u8"n" };
-constexpr char* dir_arg_name{ u8"dir" };
-constexpr char* dir_arg_short_name{ u8"d" };
-constexpr char* thread_arg_name{ u8"threads" };
-constexpr char* thread_arg_short_name{ u8"t" };
-constexpr char* queue_arg_name{ u8"queue-size" };
-constexpr char* queue_arg_short_name{ u8"s" };
-constexpr char* log_sett_arg_name{ u8"logconf" };
-constexpr char* log_sett_short_arh_name{ u8"l" };
-constexpr char* xml_dir_arg_name{ u8"output-dir" };
-constexpr char* xml_short_arg_name{ u8"o" };
-
-bool init_logg_settings_from_file(const path& path_to_config)
+bool init_logg_settings_from_file(const boost::filesystem::path & path_to_config)
 {
     using std::ifstream;
     using std::cerr;
@@ -101,9 +102,11 @@ bool init_logg_settings_from_file(const path& path_to_config)
     return true;
 }
 
-std::tuple<variables_map, options_description> parse_cli_args(int argc, char** argv)
+auto parse_cli_args(int argc, char ** argv)
 {
     using std::string;
+    using namespace cliargs;
+    using namespace boost::program_options;
 
     string dir{ dir_arg_name };
     dir += ',';
@@ -125,9 +128,9 @@ std::tuple<variables_map, options_description> parse_cli_args(int argc, char** a
     log_arg += ',';
     log_arg += log_sett_short_arh_name;
 
-    string xml_arg{ xml_dir_arg_name };
-    xml_arg += ',';
-    xml_arg += xml_short_arg_name;
+    string db_arg{ db_arg_name };
+    db_arg += ',';
+    db_arg += db_short_arg_name;
 
     options_description desc{ u8"Program options for descriptors. Create XML file with descriptors for each binvox in input directory.\nSee: Novotni M., Klein R. 3D zernike descriptors for content based shape retrieval New York, New York, USA: ACM Press, 2003. 216 c." };
     desc.add_options()
@@ -137,7 +140,7 @@ std::tuple<variables_map, options_description> parse_cli_args(int argc, char** a
         (thread_arg.c_str(), value<int>()->default_value(2), u8"Maximum number of threads for descriptor computing.")
         (queue_arg.c_str(), value<int>()->default_value(500), u8"Maximum size of queue of file paths when recursive scanning directory. If size of queue is greater than parameter then scanning thread sleeps.")
         (log_arg.c_str(), value<string>()->default_value(u8"logsettings.ini"), u8"Path to file with log config. See https://www.boost.org/doc/libs/1_72_0/libs/log/doc/html/log/detailed/utilities.html#log.detailed.utilities.setup.settings_file")
-        (xml_arg.c_str(), value<string>()->default_value(u8"xml-desc"), u8"Path to output directory to store XML with results")
+        (db_arg.c_str(), value<string>()->default_value(u8"descriptors.sqlite"), u8"Path to database to store descriptors")
         ;
 
     variables_map vm;
@@ -147,22 +150,25 @@ std::tuple<variables_map, options_description> parse_cli_args(int argc, char** a
     return make_tuple(vm, desc);
 }
 
-bool validate_args(const variables_map& args, const options_description& desc)
+bool validate_args(const boost::program_options::variables_map & args, const boost::program_options::options_description & desc)
 {
     using std::cout;
     using std::cerr;
     using std::endl;
     using std::string;
+    using namespace cliargs;
+    using boost::filesystem::path;
+    using boost::filesystem::file_type;
 
-    if(args.count(dir_arg_name) != 1)
+    if (args.count(dir_arg_name) != 1)
     {
-        cerr << u8"Missing required argument: " << dir_arg_name  << endl;
+        cerr << u8"Missing required argument: " << dir_arg_name << endl;
         return false;
     }
 
-     if(args.count(order_arg_name) != 1)
+    if (args.count(order_arg_name) != 1)
     {
-        cerr << u8"Missing required argument: " << order_arg_name  << endl;
+        cerr << u8"Missing required argument: " << order_arg_name << endl;
         return false;
     }
 
@@ -217,13 +223,13 @@ bool validate_args(const variables_map& args, const options_description& desc)
     }
 
     {
-        path xml_dir{ args[xml_dir_arg_name].as<string>() };
+        path xml_dir{ args[db_arg_name].as<string>() };
 
         if (exists(xml_dir))
         {
-            if (status(xml_dir).type() != file_type::directory_file)
+            if (status(xml_dir).type() != file_type::regular_file)
             {
-                cerr << xml_dir_arg_name << u8" is not directory or does not exist." << endl;
+                cerr << db_arg_name << u8" is not directory or does not exist." << endl;
                 return false;
             }
         }
@@ -234,20 +240,20 @@ bool validate_args(const variables_map& args, const options_description& desc)
 
 void clear()
 {
-    xmlCleanupParser();
     boost::log::core::get()->remove_all_sinks();
 }
 
-int main(int argc, char** argv)
+int main(int argc, char ** argv)
 {
     using std::cout;
     using std::endl;
     using std::cerr;
     using std::string;
+    using namespace boost::filesystem;
+    using namespace boost::program_options;
+    using namespace cliargs;
 
-    LIBXML_TEST_VERSION
-
-        variables_map args;
+    variables_map args;
 
     try
     {
@@ -282,45 +288,31 @@ int main(int argc, char** argv)
     int max_order{ args[order_arg_name].as<int>() };
     int queue_size{ args[queue_arg_name].as<int>() };
     int thread_count{ args[thread_arg_name].as<int>() };
-    path xml_dir{ args[xml_dir_arg_name].as<string>() };
+    path db_path{ args[db_arg_name].as<string>() };
 
-    logging::logger_t& logger = logging::logger_main::get();
+    logging::logger_t & logger = logging::logger_main::get();
 
     try
     {
-        if (!exists(xml_dir))
-        {
-            BOOST_LOG_SEV(logger, logging::severity_t::info) << u8"Create directory: " << xml_dir << endl;
+        sqlite::sqlite_config config;
 
-            if (!create_directories(xml_dir))
-            {
-                BOOST_LOG_SEV(logger, logging::severity_t::error) << u8"Cannot create directories" << endl;
+        config.encoding = sqlite::Encoding::UTF8;
+        config.flags = sqlite::OpenFlags::READWRITE | sqlite::OpenFlags::CREATE | sqlite::OpenFlags::FULLMUTEX;
 
-                clear();
+        sqlite::database db(db_path.string(), config);
 
-                return 1;
-            }
-        }
+        db::DbSchema::init_db(db);
 
-        for (auto& path : directory_iterator(xml_dir))
-        {
-            if (path.path().extension() == u8".xml")
-            {
-                BOOST_LOG_SEV(logger, logging::severity_t::info) << u8"Delete " << path << endl;
-                remove(path);
-            }
-        }
+        parallel::recursive_compute(input_directory, max_order, queue_size, thread_count, db);
+
+        clear();
     }
-    catch (const boost::filesystem::filesystem_error & exc)
+    catch (const sqlite::sqlite_exception & exc)
     {
-        BOOST_LOG_SEV(logger, logging::severity_t::error) << exc.what() << endl;
+        BOOST_LOG_SEV(logger, logging::severity_t::error) << exc.what() << endl << exc.get_code() << endl << exc.get_sql() << endl;
         clear();
         return 1;
     }
-
-    parallel::recursive_compute(input_directory, max_order, queue_size, thread_count, xml_dir);
-
-    clear();
 
     return 0;
 }

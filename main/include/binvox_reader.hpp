@@ -11,11 +11,11 @@ namespace io
     {
         // Original code was imported https://www.patrickmin.com/binvox/read_binvox.cc and slightly modified
         template<typename VoxelType>
-        bool read_binvox(const boost::filesystem::path& path_to_file, std::vector<VoxelType>& voxels, std::size_t& dim)
+        bool read_binvox(const boost::filesystem::path & path_to_file, std::vector<VoxelType> & voxels, std::size_t & dim)
         {
             static_assert(std::is_integral<VoxelType>::value || std::is_floating_point<VoxelType>::value, "Voxel type must be integral or float");
 
-            logging::logger_t& logger = logging::logger_io::get();
+            logging::logger_t & logger = logging::logger_io::get();
 
             using byte = unsigned char;
 
@@ -99,7 +99,8 @@ namespace io
                     do
                     {  // skip until end of line
                         c = input.get();
-                    } while (input.good() && (c != '\n'));
+                    }
+                    while (input.good() && (c != '\n'));
 
                     if (!input.good())
                     {
