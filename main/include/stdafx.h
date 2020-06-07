@@ -15,6 +15,7 @@
 #include <iterator>
 #include <complex>
 #include <sstream>
+#include <set>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -29,5 +30,6 @@
 #include <boost/math/special_functions/factorials.hpp>
 #include <boost/math/constants/constants.hpp>
 
-#include <libxml/xmlwriter.h>
-#include <libxml/xmlreader.h>
+#include <sqlite_modern_cpp.h>
+
+#include <picosha2.h>
